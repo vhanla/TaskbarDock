@@ -12,6 +12,9 @@ object Form2: TForm2
   Font.Style = []
   OldCreateOrder = False
   OnCreate = FormCreate
+  DesignSize = (
+    525
+    292)
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -24,10 +27,11 @@ object Form2: TForm2
       'cons like File Explorer.'
   end
   object Button1: TButton
-    Left = 364
+    Left = 442
     Top = 259
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Caption = '&Apply'
     TabOrder = 0
     OnClick = Button1Click
@@ -43,10 +47,11 @@ object Form2: TForm2
     ExplicitHeight = 284
   end
   object Button2: TButton
-    Left = 128
-    Top = 32
+    Left = 127
+    Top = 259
     Width = 75
     Height = 25
+    Anchors = [akLeft, akBottom]
     Caption = '&Refresh'
     TabOrder = 2
     OnClick = Button2Click
