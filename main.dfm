@@ -42,7 +42,6 @@ object Form1: TForm1
     end
     object Transparent1: TMenuItem
       Caption = 'Tra&nsparent'
-      Checked = True
       OnClick = Transparent1Click
     end
     object Center1: TMenuItem
