@@ -45,6 +45,7 @@ type
   private
     { Private declarations }
     Taskbar: TTaskbar;
+    Taskbar2: TTaskbar;
 
     function FindWindowRecursive(hParent: HWND; szClass: PWideChar; szCaption:PWideChar): HWND;
     procedure GetTaskbarWindows;
@@ -101,6 +102,8 @@ begin
   if CloseApp then
   begin
     tmrOptions.Enabled := False;
+    Taskbar2.StartBtnVisible();
+    Taskbar2.NotifyAreaVisible();
     Taskbar.StartBtnVisible();
     Taskbar.NotifyAreaVisible();
 
@@ -123,6 +126,7 @@ end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
+  Taskbar2.Free;
   Taskbar.Free;
 end;
 
@@ -149,8 +153,12 @@ begin
 
   Taskbar := TTaskbar.Create;
   Taskbar.UpdateTaskbarInfo;
-
   Taskbar.TransStyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
+
+  Taskbar2 := TTaskbar.Create(2);
+  Taskbar2.UpdateTaskbarInfo;
+  Taskbar2.TransStyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
+
   AppIsRunning := True;
   ThreadIsRunning := True;
   Parallel.Async(
@@ -159,7 +167,10 @@ begin
       while AppIsRunning do
       begin
         if Form1.Transparent1.Checked then
+        begin
           Form1.Taskbar.Transparent;
+          Form1.Taskbar2.Transparent;
+        end;
         Sleep(10);
       end
     end,
@@ -196,6 +207,7 @@ end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
 begin
+  Taskbar2.CenterAppsButtons;
   Taskbar.CenterAppsButtons;
 end;
 
@@ -212,10 +224,12 @@ begin
 
   if Start1.Checked then
   begin
+    Taskbar2.StartBtnVisible();
     Taskbar.StartBtnVisible();
   end
   else
   begin
+    Taskbar2.StartBtnVisible(False);
     Taskbar.StartBtnVisible(False);
     if (ms.X >= Taskbar.StartRect.Left)
     and (ms.X <= Taskbar.StartRect.Right)
@@ -223,23 +237,40 @@ begin
     and (ms.Y <= Taskbar.StartRect.Bottom)
     then
       Taskbar.StartBtnVisible();
+    if (ms.X >= Taskbar2.StartRect.Left)
+    and (ms.X <= Taskbar2.StartRect.Right)
+    and (ms.Y >= Taskbar2.StartRect.Top)
+    and (ms.Y <= Taskbar2.StartRect.Bottom)
+    then
+      Taskbar2.StartBtnVisible();
   end;
 
   if Tray1.Checked then
-    Taskbar.NotifyAreaVisible()
+  begin
+    Taskbar2.NotifyAreaVisible();
+    Taskbar.NotifyAreaVisible();
+  end
   else
   begin
+    Taskbar2.NotifyAreaVisible(False);
     Taskbar.NotifyAreaVisible(False);
     if (ms.X >= Taskbar.TrayRect.Left)
     and (ms.X <= Taskbar.TrayRect.Right)
     and (ms.Y >= Taskbar.TrayRect.Top)
     and (ms.Y <= Taskbar.TrayRect.Bottom)
     then
-      Taskbar.NotifyAreaVisible();
+      Taskbar2.NotifyAreaVisible();
+    if (ms.X >= Taskbar2.TrayRect.Left)
+    and (ms.X <= Taskbar2.TrayRect.Right)
+    and (ms.Y >= Taskbar2.TrayRect.Top)
+    and (ms.Y <= Taskbar2.TrayRect.Bottom)
+    then
+      Taskbar2.NotifyAreaVisible();
   end;
 
   if Full1.Checked then
   begin
+    Taskbar2.FullTaskBar;
     Taskbar.FullTaskBar;
   end;
 
@@ -253,13 +284,17 @@ end;
 
 procedure TForm1.tmrUpdateTBinfoTimer(Sender: TObject);
 begin
+  Taskbar2.UpdateTaskbarInfo;
   Taskbar.UpdateTaskbarInfo;
 end;
 
 procedure TForm1.WndProc(var Msg: TMessage);
 begin
   if Msg.Msg = fwm_TaskbarRestart then
+  begin
+    Taskbar2.UpdateTaskbarInfo;
     Taskbar.UpdateTaskbarInfo;
+  end;
 
   inherited WndProc(Msg);
 end;

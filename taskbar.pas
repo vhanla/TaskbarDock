@@ -52,12 +52,14 @@ type
     _handle: THandle;
     _notaskbar: Boolean;
     _transstyle: Integer;
+    _monitor: Integer;
 
     _start: TTaskComponent;
     _trayButton1: TTaskComponent;
     _trayButton2: TTaskComponent;
     _trayDummySearchControl: TTaskComponent;
     _reBarWindow32: TTaskComponent;
+    _WorkerW: TTaskComponent;
     _MSTaskSwWClass: TTaskComponent;
     _MSTaskListWClass: TTaskComponent;
     _trayNotifyWnd: TTaskComponent;
@@ -78,7 +80,7 @@ type
     property TrayRect: TRect read _trayNotifyWnd.Rect;
     property StartRect: TRect read _start.Rect;
 
-    constructor Create;
+    constructor Create(monitor: Integer = 1);
     destructor Destroy; override;
     procedure Transparent;
     procedure UpdateTaskbarInfo;
@@ -112,18 +114,34 @@ begin
   if _appsBtnLeft = 0 then Exit; // #TODO taskbar being sides centering is not handled yet
 
   // if taskbar buttons width is full, there is no need to adjust, 6 is a margin constant
-  if (_appsBtnRight - _appsBtnLeft + 6) > _MSTaskSwWClass.Rect.Width then Exit;
+  if _monitor = 1 then  
+  begin
+    if (_appsBtnRight - _appsBtnLeft + 6) > _MSTaskSwWClass.Rect.Width then Exit;
 
-  aLeft := (_rect.Width div 2) - _MSTaskSwWClass.Rect.Left - ((_appsBtnRight - _appsBtnLeft) div 2);
+    aLeft := (_rect.Width div 2) - _MSTaskSwWClass.Rect.Left - ((_appsBtnRight - _appsBtnLeft) div 2);
 
-  SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
+    SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
+  end
+  else if _monitor = 2 then
+  begin
+    if (abs(_appsBtnRight - _appsBtnLeft) + 6) > abs(_WorkerW.Rect.Right - _WorkerW.Rect.Left) then Exit;
+
+    aLeft := (_rect.Width div 2) - abs(_WorkerW.Rect.Left-_rect.Left) - ((_appsBtnRight - _appsBtnLeft) div 2);
+
+    SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
+  end;  
 
 end;
 
-constructor TTaskbar.Create;
+constructor TTaskbar.Create(monitor: Integer = 1);
 begin
   _transstyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
-  _handle := FindWindow('Shell_TrayWnd', nil);
+  _monitor := monitor;
+  if _monitor = 1 then
+    _handle := FindWindow('Shell_TrayWnd', nil)
+  else if _monitor = 2 then
+    _handle := FindWindow('Shell_SecondaryTrayWnd', nil);
+
   if _handle = 0 then
     _notaskbar := True
   else
@@ -204,7 +222,10 @@ end;
 
 procedure TTaskbar.UpdateTaskbarHandle;
 begin
-  _handle := FindWindow('Shell_TrayWnd', nil);
+  if _monitor = 1 then
+    _handle := FindWindow('Shell_TrayWnd', nil)
+  else if _monitor = 2 then
+    _handle := FindWindow('Shell_SecondaryTrayWnd', nil);
   if _handle = 0 then
     _notaskbar := True
   else
@@ -224,10 +245,13 @@ var
   buttonsArray: array of OleVariant;
   btnName: WideString;
   btnRect: TRect;
+  firstBtnLeft, firstBtnRight: Boolean;
 begin
   if _notaskbar then Exit;
   GetWindowRect(_handle, _rect);
 
+  if _monitor = 1 then
+  begin
   _reBarWindow32.Handle := FindWindowEx(_handle, 0, 'ReBarWindow32', nil);
   if _reBarWindow32.Handle = 0 then Exit;
   GetWindowRect(_reBarWindow32.Handle, _reBarWindow32.Rect);
@@ -237,6 +261,16 @@ begin
   GetWindowRect(_MSTaskSwWClass.Handle, _MSTaskSwWClass.Rect);
 
   _MSTaskListWClass.Handle := FindWindowEx(_MSTaskSwWClass.Handle, 0, 'MSTaskListWClass', nil);
+  end
+  else if _monitor = 2 then
+  begin
+    _WorkerW.Handle := FindWindowEx(_handle, 0, 'WorkerW', nil);
+    if _WorkerW.Handle = 0 then Exit;
+    GetWindowRect(_WorkerW.Handle, _WorkerW.Rect);
+
+    _MSTaskListWClass.Handle := FindWindowEx(_WorkerW.Handle, 0, 'MSTaskListWClass', nil);
+  end;
+
   if _MSTaskListWClass.Handle = 0 then Exit;
   GetWindowRect(_MSTaskListWClass.Handle, _MSTaskListWClass.Rect);
 
@@ -244,17 +278,21 @@ begin
   if _start.Handle = 0 then Exit;
   GetWindowRect(_start.Handle, _start.Rect);
 
-  _trayNotifyWnd.Handle := FindWindowEx(_handle, 0, 'TrayNotifyWnd', nil);
+  if _monitor = 1 then
+    _trayNotifyWnd.Handle := FindWindowEx(_handle, 0, 'TrayNotifyWnd', nil)
+  else if _monitor = 2 then
+    _trayNotifyWnd.Handle := FindWindowEx(_handle, 0, 'ClockButton', nil);
+
   if _trayNotifyWnd.Handle = 0 then Exit;
-  GetWindowRect(_trayNotifyWnd.Handle, _trayNotifyWnd.Rect);
+    GetWindowRect(_trayNotifyWnd.Handle, _trayNotifyWnd.Rect);
 
     {_trayDummySearchControl.Handle := FindWindowEx(_handle, 0, 'TrayDummySearchControl', nil);
   if _trayDummySearchControl.Handle > 0 then
     GetWindowRect(_trayDummySearchControl.Handle, _trayDummySearchControl.Rect);}
 
   // Get Width and Rect of taskbar application's buttons
-  _appsBtnLeft := 10000;
-  _appsBtnRight := 0;
+  firstBtnLeft := True;
+  firstBtnRight := True;
   res := AccessibleObjectFromWindow(_MSTaskListWClass.Handle, 0, IID_IAccessible, acc);
   if res = S_OK then
   begin
@@ -297,12 +335,30 @@ begin
                           childAccessible.accLocation(btnRect.Left, btnRect.Top, btnRect.Right, btnRect.Bottom, buttonsArray[j]);
 
                           // now we must make sure the button found has width and height major than 0
-                          if (btnRect.Bottom > 0) and (btnRect.Right > 0) then
+                          if (btnRect.Bottom > 0) and (btnRect.Right> 0) then
                           begin
-                            if btnRect.Left < _appsBtnLeft then
+                            if firstBtnLeft then
+                            begin
+                              firstBtnLeft := False;
                               _appsBtnLeft := btnRect.Left;
-                            if btnRect.Left + btnRect.Right > _appsBtnRight then
+                            end
+                            else
+                            begin
+                              if btnRect.Left < _appsBtnLeft then
+                                _appsBtnLeft := btnRect.Left;
+                            end;
+                            
+                            if firstBtnRight then
+                            begin
+                              firstBtnRight := False;
                               _appsBtnRight := btnRect.Left + btnRect.Right;
+                            end
+                            else
+                            begin
+                              if btnRect.Left + btnRect.Right > _appsBtnRight then
+                                _appsBtnRight := btnRect.Left + btnRect.Right;
+                            end;
+                              
                           end;
                         end;
                       end;
