@@ -4,7 +4,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus, Registry,
   OTLParallel, OTLTaskControl, taskbar;
 
 type
@@ -26,6 +26,7 @@ type
     N2: TMenuItem;
     About1: TMenuItem;
     N3: TMenuItem;
+    StartwithWindows1: TMenuItem;
     procedure PinnedIcons1Click(Sender: TObject);
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -42,6 +43,7 @@ type
     procedure Center1Click(Sender: TObject);
     procedure Transparent1Click(Sender: TObject);
     procedure About1Click(Sender: TObject);
+    procedure StartwithWindows1Click(Sender: TObject);
   private
     { Private declarations }
     Taskbar: TTaskbar;
@@ -50,6 +52,8 @@ type
     function FindWindowRecursive(hParent: HWND; szClass: PWideChar; szCaption:PWideChar): HWND;
     procedure GetTaskbarWindows;
     procedure Init;
+    procedure AutoStartState;
+    procedure SetAutoStart(runwithwindows: Boolean = True);
   public
     { Public declarations }
   protected
@@ -82,6 +86,23 @@ begin
   #13'Author: vhanla'+
   #13'MIT License'+
   #13#13'https://github.com/vhanla/taskbardock',mtInformation, [mbOK], 0);
+end;
+
+procedure TForm1.AutoStartState;
+var
+  reg: TRegistry;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.OpenKeyReadOnly('SOFTWARE\Microsoft\Windows\CurrentVersion\Run');
+    if reg.ValueExists('TaskbarDock') then
+      if reg.ReadString('TaskbarDock')<>'' then
+        StartwithWindows1.Checked := True;
+    reg.CloseKey;
+  finally
+    reg.Free;
+  end;
 end;
 
 procedure TForm1.Center1Click(Sender: TObject);
@@ -127,6 +148,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  AutoStartState;
   Init;
   tmrUpdateTBinfo.Enabled := True;
 end;
@@ -207,9 +229,34 @@ begin
   Tray1.Checked := not Tray1.Checked;
 end;
 
+procedure TForm1.SetAutoStart(runwithwindows: Boolean);
+var
+  reg: TRegistry;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run', False);
+    if runwithwindows then
+      reg.WriteString('TaskbarDock', ParamStr(0))
+    else
+      if reg.ValueExists('TaskbarDock') then
+        reg.DeleteValue('TaskbarDock');
+    reg.CloseKey;
+  finally
+    reg.Free;
+  end;
+end;
+
 procedure TForm1.Start1Click(Sender: TObject);
 begin
   Start1.Checked := not Start1.Checked;
+end;
+
+procedure TForm1.StartwithWindows1Click(Sender: TObject);
+begin
+  StartwithWindows1.Checked := not StartwithWindows1.Checked;
+  SetAutoStart(StartwithWindows1.Checked);
 end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
