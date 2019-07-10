@@ -56,6 +56,10 @@ type
     procedure WndProc(var Msg: TMessage); override;
   end;
 
+  //Requires setversion.cmd to be run prior to build for release
+  {$include RELEASENUMBER.inc}
+  {$include VERSION.inc}
+
 var
   Form1: TForm1;
   // Global variables
@@ -74,7 +78,10 @@ tbicons;
 
 procedure TForm1.About1Click(Sender: TObject);
 begin
-  MessageDlg('TaskbarDock v0.1b'#13'Author: vhanla'#13'MIT License',mtInformation, [mbOK], 0);
+  MessageDlg('TaskbarDock v'+VERSION+RELEASENUMBER+
+  #13'Author: vhanla'+
+  #13'MIT License'+
+  #13#13'https://github.com/vhanla/taskbardock',mtInformation, [mbOK], 0);
 end;
 
 procedure TForm1.Center1Click(Sender: TObject);
