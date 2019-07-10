@@ -14,11 +14,14 @@ TaskbarDock offers a few extra features to customize your Windows 10 taskbar.
 - Autorun
 - Remember settings
 
+## KNOWN ISSUES:
+- Restoring opacity to taskbar needs manual procedures (like locking/unlocking taskbar with its context menu)
+
 ## Current Status:
 
 It is still in progress. 
 
-You can test it downloading it from releases page.
+You can test it [downloading](https://github.com/vhanla/taskbardock/releases) it from releases page.
 
 ## How to use:
 
