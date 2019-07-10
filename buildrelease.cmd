@@ -19,7 +19,6 @@ for /F %%i in (TAG) do set "TAG=%%i"
 set ZIPFILE=TaskbarDock%TAG%.zip
 
 :OPTIONS
-set options=1 2 3 4
 echo.
 echo BuildRelease: %BINARY% %TAG%
 echo Choose the tasks to do:
@@ -31,7 +30,7 @@ echo 4. Upload Release Binary
 echo 5. Delete Release
 echo 6. Exit
 echo.
-echo Enter valid options [ %options% ]:
+echo Enter valid options:
 set /P res=">
 if "%res%"=="1" goto buildrelease
 if "%res%"=="2" goto newrelease
