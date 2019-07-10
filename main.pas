@@ -266,7 +266,8 @@ begin
     and (ms.Y >= Taskbar.TrayRect.Top)
     and (ms.Y <= Taskbar.TrayRect.Bottom)
     then
-      Taskbar2.NotifyAreaVisible();
+      Taskbar.NotifyAreaVisible();
+
     if (ms.X >= Taskbar2.TrayRect.Left)
     and (ms.X <= Taskbar2.TrayRect.Right)
     and (ms.Y >= Taskbar2.TrayRect.Top)
@@ -291,6 +292,7 @@ end;
 
 procedure TForm1.tmrUpdateTBinfoTimer(Sender: TObject);
 begin
+  Taskbar2.UpdateTaskbarHandle;
   Taskbar2.UpdateTaskbarInfo;
   Taskbar.UpdateTaskbarInfo;
 end;
@@ -299,6 +301,8 @@ procedure TForm1.WndProc(var Msg: TMessage);
 begin
   if Msg.Msg = fwm_TaskbarRestart then
   begin
+    Taskbar2.UpdateTaskbarHandle;
+    Taskbar.UpdateTaskbarHandle;
     Taskbar2.UpdateTaskbarInfo;
     Taskbar.UpdateTaskbarInfo;
   end;
