@@ -84,7 +84,7 @@ type
     destructor Destroy; override;
     procedure Transparent;
     procedure UpdateTaskbarInfo;
-    procedure CenterAppsButtons;
+    procedure CenterAppsButtons(center: Boolean = True);
     procedure Hide(handle: THandle);
     procedure Show(handle: THandle);
     procedure StartBtnVisible(visible: Boolean = True);
@@ -105,7 +105,7 @@ implementation
 
 { TTaskbar }
 
-procedure TTaskbar.CenterAppsButtons;
+procedure TTaskbar.CenterAppsButtons(center: Boolean = True);
 var
   aLeft: Integer;
 begin
@@ -113,24 +113,33 @@ begin
 
   if _appsBtnLeft = 0 then Exit; // #TODO taskbar being sides centering is not handled yet
 
-  // if taskbar buttons width is full, there is no need to adjust, 6 is a margin constant
-  if _monitor = 1 then  
+  if not center then
   begin
-    if (_appsBtnRight - _appsBtnLeft + 6) > _MSTaskSwWClass.Rect.Width then Exit;
-
-    aLeft := (_rect.Width div 2) - _MSTaskSwWClass.Rect.Left - ((_appsBtnRight - _appsBtnLeft) div 2);
-
-    SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
+    if _monitor = 1 then    
+      SetWindowPos(_MSTaskListWClass.Handle, 0, 0, 0, _MSTaskSwWClass.Rect.Width, _MSTaskSwWClass.Rect.Height, SWP_NOACTIVATE)
+    else if _monitor = 2 then
+      SetWindowPos(_MSTaskListWClass.Handle, 0, 0, 0, _WorkerW.Rect.Width, _WorkerW.Rect.Height, SWP_NOACTIVATE)
   end
-  else if _monitor = 2 then
+  else
   begin
-    if (abs(_appsBtnRight - _appsBtnLeft) + 6) > abs(_WorkerW.Rect.Right - _WorkerW.Rect.Left) then Exit;
+    // if taskbar buttons width is full, there is no need to adjust, 6 is a margin constant
+    if _monitor = 1 then  
+    begin
+      if (_appsBtnRight - _appsBtnLeft + 6) > _MSTaskSwWClass.Rect.Width then Exit;
 
-    aLeft := (_rect.Width div 2) - abs(_WorkerW.Rect.Left-_rect.Left) - ((_appsBtnRight - _appsBtnLeft) div 2);
+      aLeft := (_rect.Width div 2) - _MSTaskSwWClass.Rect.Left - ((_appsBtnRight - _appsBtnLeft) div 2);
 
-    SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
-  end;  
+      SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
+    end
+    else if _monitor = 2 then
+    begin
+      if (abs(_appsBtnRight - _appsBtnLeft) + 6) > abs(_WorkerW.Rect.Right - _WorkerW.Rect.Left) then Exit;
 
+      aLeft := (_rect.Width div 2) - abs(_WorkerW.Rect.Left-_rect.Left) - ((_appsBtnRight - _appsBtnLeft) div 2);
+
+      SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
+    end;  
+  end;
 end;
 
 constructor TTaskbar.Create(monitor: Integer = 1);
@@ -358,7 +367,7 @@ begin
                               if btnRect.Left + btnRect.Right > _appsBtnRight then
                                 _appsBtnRight := btnRect.Left + btnRect.Right;
                             end;
-                              
+
                           end;
                         end;
                       end;
