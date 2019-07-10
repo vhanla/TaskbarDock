@@ -24,45 +24,49 @@ object Form1: TForm1
     Top = 104
   end
   object PopupMenu1: TPopupMenu
-    Left = 256
-    Top = 96
-    object Start1: TMenuItem
+    Left = 304
+    Top = 128
+    object mnuStart: TMenuItem
       Caption = '&Start'
       Checked = True
-      OnClick = Start1Click
+      OnClick = mnuStartClick
     end
-    object Tray1: TMenuItem
+    object mnuTray: TMenuItem
       Caption = '&Tray'
       Checked = True
-      OnClick = Tray1Click
+      OnClick = mnuTrayClick
     end
-    object Full1: TMenuItem
+    object mnuFull: TMenuItem
       Caption = '&Full'
-      OnClick = Full1Click
+      OnClick = mnuFullClick
     end
-    object Transparent1: TMenuItem
+    object mnuTransparent: TMenuItem
       Caption = 'Tra&nsparent'
-      OnClick = Transparent1Click
+      OnClick = mnuTransparentClick
     end
-    object Center1: TMenuItem
+    object mnuCenter: TMenuItem
       Caption = '&Center'
-      OnClick = Center1Click
+      OnClick = mnuCenterClick
     end
     object N2: TMenuItem
       Caption = '-'
       Visible = False
     end
-    object PinnedIcons1: TMenuItem
+    object mnuPinnedIcons: TMenuItem
       Caption = 'Pinned Icons'
       Visible = False
-      OnClick = PinnedIcons1Click
+      OnClick = mnuPinnedIconsClick
     end
     object N1: TMenuItem
       Caption = '-'
     end
-    object About1: TMenuItem
+    object mnuStartwithWindows: TMenuItem
+      Caption = 'Start with &Windows'
+      OnClick = mnuStartwithWindowsClick
+    end
+    object mnuAbout: TMenuItem
       Caption = '&About'
-      OnClick = About1Click
+      OnClick = mnuAboutClick
     end
     object N3: TMenuItem
       Caption = '-'

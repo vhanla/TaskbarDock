@@ -4,30 +4,30 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus, Registry,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus, Registry, IniFiles,
   OTLParallel, OTLTaskControl, taskbar;
 
 type
   TForm1 = class(TForm)
     TrayIcon1: TTrayIcon;
     PopupMenu1: TPopupMenu;
-    PinnedIcons1: TMenuItem;
+    mnuPinnedIcons: TMenuItem;
     N1: TMenuItem;
     Exit1: TMenuItem;
     tmrUpdateTBinfo: TTimer;
     tmrOptions: TTimer;
     tmrThreadWaiter: TTimer;
     tmrCenter: TTimer;
-    Start1: TMenuItem;
-    Tray1: TMenuItem;
-    Full1: TMenuItem;
-    Center1: TMenuItem;
-    Transparent1: TMenuItem;
+    mnuStart: TMenuItem;
+    mnuTray: TMenuItem;
+    mnuFull: TMenuItem;
+    mnuCenter: TMenuItem;
+    mnuTransparent: TMenuItem;
     N2: TMenuItem;
-    About1: TMenuItem;
+    mnuAbout: TMenuItem;
     N3: TMenuItem;
-    StartwithWindows1: TMenuItem;
-    procedure PinnedIcons1Click(Sender: TObject);
+    mnuStartwithWindows: TMenuItem;
+    procedure mnuPinnedIconsClick(Sender: TObject);
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -37,13 +37,13 @@ type
     procedure tmrThreadWaiterTimer(Sender: TObject);
     procedure tmrCenterTimer(Sender: TObject);
     procedure tmrOptionsTimer(Sender: TObject);
-    procedure Start1Click(Sender: TObject);
-    procedure Tray1Click(Sender: TObject);
-    procedure Full1Click(Sender: TObject);
-    procedure Center1Click(Sender: TObject);
-    procedure Transparent1Click(Sender: TObject);
-    procedure About1Click(Sender: TObject);
-    procedure StartwithWindows1Click(Sender: TObject);
+    procedure mnuStartClick(Sender: TObject);
+    procedure mnuTrayClick(Sender: TObject);
+    procedure mnuFullClick(Sender: TObject);
+    procedure mnuCenterClick(Sender: TObject);
+    procedure mnuTransparentClick(Sender: TObject);
+    procedure mnuAboutClick(Sender: TObject);
+    procedure mnuStartwithWindowsClick(Sender: TObject);
   private
     { Private declarations }
     Taskbar: TTaskbar;
@@ -54,6 +54,8 @@ type
     procedure Init;
     procedure AutoStartState;
     procedure SetAutoStart(runwithwindows: Boolean = True);
+    procedure LoadINI;
+    procedure SaveINI;
   public
     { Public declarations }
   protected
@@ -80,7 +82,7 @@ implementation
 uses
 tbicons;
 
-procedure TForm1.About1Click(Sender: TObject);
+procedure TForm1.mnuAboutClick(Sender: TObject);
 begin
   MessageDlg('TaskbarDock v'+VERSION+RELEASENUMBER+
   #13'Author: vhanla'+
@@ -98,17 +100,19 @@ begin
     reg.OpenKeyReadOnly('SOFTWARE\Microsoft\Windows\CurrentVersion\Run');
     if reg.ValueExists('TaskbarDock') then
       if reg.ReadString('TaskbarDock')<>'' then
-        StartwithWindows1.Checked := True;
+        mnuStartwithWindows.Checked := True;
     reg.CloseKey;
   finally
     reg.Free;
   end;
 end;
 
-procedure TForm1.Center1Click(Sender: TObject);
+procedure TForm1.mnuCenterClick(Sender: TObject);
 begin
-  Center1.Checked := not Center1.Checked;
-  tmrCenter.Enabled := Center1.Checked;
+  mnuCenter.Checked := not mnuCenter.Checked;
+  tmrCenter.Enabled := mnuCenter.Checked;
+
+  Taskbar.CenterAppsButtons(mnuCenter.Checked);
 end;
 
 procedure TForm1.Exit1Click(Sender: TObject);
@@ -136,7 +140,10 @@ begin
     Taskbar.NotifyAreaVisible();
 
     if not ThreadIsRunning then
+    begin
+      SaveINI;
       CanClose := True
+    end
     else
       tmrThreadWaiter.Enabled := True;
   end
@@ -151,6 +158,7 @@ begin
   AutoStartState;
   Init;
   tmrUpdateTBinfo.Enabled := True;
+  LoadINI;
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -164,9 +172,9 @@ begin
   ShowWindow(Application.Handle, SW_HIDE);
 end;
 
-procedure TForm1.Full1Click(Sender: TObject);
+procedure TForm1.mnuFullClick(Sender: TObject);
 begin
-  Full1.Checked := not Full1.Checked;
+  mnuFull.Checked := not mnuFull.Checked;
 end;
 
 procedure TForm1.GetTaskbarWindows;
@@ -195,7 +203,7 @@ begin
     begin
       while AppIsRunning do
       begin
-        if Form1.Transparent1.Checked then
+        if Form1.mnuTransparent.Checked then
         begin
           Form1.Taskbar.Transparent;
           Form1.Taskbar2.Transparent;
@@ -214,19 +222,52 @@ begin
   fwm_TaskbarRestart := RegisterWindowMessage('TaskbarCreated');
 end;
 
-procedure TForm1.PinnedIcons1Click(Sender: TObject);
+procedure TForm1.LoadINI;
+var
+  ini: TIniFile;
+begin
+  ini := TIniFile.Create(ExtractFilePath(ParamStr(0))+'settings.ini');
+  try
+    mnuStart.Checked := ini.ReadBool('TaskbarDock','ShowStartButton', True);
+    mnuTray.Checked := ini.ReadBool('TaskbarDock','ShowTrayArea', True);
+    mnuFull.Checked := ini.ReadBool('TaskbarDock','AbsoluteWidth', False);
+    mnuCenter.Checked := ini.ReadBool('TaskbarDock','CenterIcons', False);
+    tmrCenter.Enabled := mnuCenter.Checked;
+    mnuTransparent.Checked := ini.ReadBool('TaskbarDock','Transparent', False);
+  finally
+    ini.Free;
+  end;
+end;
+
+procedure TForm1.SaveINI;
+var
+  ini: TIniFile;
+begin
+  ini := TIniFile.Create(ExtractFilePath(ParamStr(0))+'settings.ini');
+  try
+    ini.WriteBool('TaskbarDock','ShowStartButton', mnuStart.Checked);
+    ini.WriteBool('TaskbarDock','ShowTrayArea', mnuTray.Checked);
+    ini.WriteBool('TaskbarDock','AbsoluteWidth', mnuFull.Checked);
+    ini.WriteBool('TaskbarDock','CenterIcons', mnuCenter.Checked);
+    ini.WriteBool('TaskbarDock','Transparent', mnuTransparent.Checked);
+  finally
+    ini.Free;
+  end;
+end;
+
+procedure TForm1.mnuPinnedIconsClick(Sender: TObject);
 begin
   Form2.Show;
 end;
 
-procedure TForm1.Transparent1Click(Sender: TObject);
+procedure TForm1.mnuTransparentClick(Sender: TObject);
 begin
-  Transparent1.Checked := not Transparent1.Checked;
+  mnuTransparent.Checked := not mnuTransparent.Checked;
 end;
 
-procedure TForm1.Tray1Click(Sender: TObject);
+procedure TForm1.mnuTrayClick(Sender: TObject);
 begin
-  Tray1.Checked := not Tray1.Checked;
+  mnuTray.Checked := not mnuTray.Checked;
 end;
 
 procedure TForm1.SetAutoStart(runwithwindows: Boolean);
@@ -248,15 +289,15 @@ begin
   end;
 end;
 
-procedure TForm1.Start1Click(Sender: TObject);
+procedure TForm1.mnuStartClick(Sender: TObject);
 begin
-  Start1.Checked := not Start1.Checked;
+  mnuStart.Checked := not mnuStart.Checked;
 end;
 
-procedure TForm1.StartwithWindows1Click(Sender: TObject);
+procedure TForm1.mnuStartwithWindowsClick(Sender: TObject);
 begin
-  StartwithWindows1.Checked := not StartwithWindows1.Checked;
-  SetAutoStart(StartwithWindows1.Checked);
+  mnuStartwithWindows.Checked := not mnuStartwithWindows.Checked;
+  SetAutoStart(mnuStartwithWindows.Checked);
 end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
@@ -276,7 +317,7 @@ begin
   except
   end;
 
-  if Start1.Checked then
+  if mnuStart.Checked then
   begin
     Taskbar2.StartBtnVisible();
     Taskbar.StartBtnVisible();
@@ -299,7 +340,7 @@ begin
       Taskbar2.StartBtnVisible();
   end;
 
-  if Tray1.Checked then
+  if mnuTray.Checked then
   begin
     Taskbar2.NotifyAreaVisible();
     Taskbar.NotifyAreaVisible();
@@ -323,7 +364,7 @@ begin
       Taskbar2.NotifyAreaVisible();
   end;
 
-  if Full1.Checked then
+  if mnuFull.Checked then
   begin
     Taskbar2.FullTaskBar;
     Taskbar.FullTaskBar;
