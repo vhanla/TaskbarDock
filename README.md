@@ -9,6 +9,11 @@ TaskbarDock offers a few extra features to customize your Windows 10 taskbar.
 - [x] Center Icons
 - [ ] Skin Taskbar
 
+## FEATURES:
+- Multimonitor support (at least with two taskbars)
+- Autorun
+- Remember settings
+
 ## Current Status:
 
 It is still in progress. 
@@ -20,6 +25,10 @@ You can test it downloading it from releases page.
 Launch the application and you will find it at the taskbar's systray icon section.
 
 ![imagen](https://user-images.githubusercontent.com/1015823/60865748-4c8a5a00-a1ec-11e9-8a50-405a971a3fad.png)
+
+
+![imagen](https://user-images.githubusercontent.com/1015823/60954759-25ec2200-a2c5-11e9-90ec-14a205ffdf4f.png)
+
 
 Right click it and test this beta.
 
