@@ -44,7 +44,6 @@ object Form2: TForm2
     Align = alLeft
     ItemHeight = 13
     TabOrder = 1
-    ExplicitHeight = 284
   end
   object Button2: TButton
     Left = 127

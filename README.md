@@ -13,7 +13,7 @@ TaskbarDock offers a few extra features to customize your Windows 10 taskbar.
 
 It is still in progress. 
 
-You can test it downloading it from releases page.
+You can test it [downloading](https://github.com/vhanla/taskbardock/releases) it from releases page.
 
 ## How to use:
 

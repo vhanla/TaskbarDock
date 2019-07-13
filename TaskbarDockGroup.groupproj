@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{AEFED1D6-33E2-4F92-8E8A-3B783100054E}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="TaskbarDock.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="TaskbarDll.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="TaskbarDock">
+        <MSBuild Projects="TaskbarDock.dproj"/>
+    </Target>
+    <Target Name="TaskbarDock:Clean">
+        <MSBuild Projects="TaskbarDock.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TaskbarDock:Make">
+        <MSBuild Projects="TaskbarDock.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TaskbarDll">
+        <MSBuild Projects="TaskbarDll.dproj"/>
+    </Target>
+    <Target Name="TaskbarDll:Clean">
+        <MSBuild Projects="TaskbarDll.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TaskbarDll:Make">
+        <MSBuild Projects="TaskbarDll.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="TaskbarDock;TaskbarDll"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="TaskbarDock:Clean;TaskbarDll:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="TaskbarDock:Make;TaskbarDll:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

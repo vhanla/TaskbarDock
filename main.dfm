@@ -99,4 +99,8 @@ object Form1: TForm1
     Left = 64
     Top = 64
   end
+  object MadExceptionHandler1: TMadExceptionHandler
+    Left = 240
+    Top = 56
+  end
 end

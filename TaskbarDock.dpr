@@ -1,6 +1,11 @@
 program TaskbarDock;
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   Vcl.Forms,
   Windows,
   SysUtils,
