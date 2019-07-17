@@ -3,8 +3,9 @@ unit main;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus, Registry, IniFiles,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus,
+  Registry, IniFiles, TlHelp32,
   OTLParallel, OTLTaskControl, taskbar, madExceptVcl;
 
 type
@@ -58,6 +59,7 @@ type
     procedure LoadINI;
     procedure SaveINI;
     function InjectDLL(const dwPID: DWORD; DLLPATH: PChar): Integer;
+    function GetProcessIdByName(s: String): DWORD;
   public
     { Public declarations }
   protected
@@ -180,7 +182,30 @@ var
 begin
 //  mnuFull.Checked := not mnuFull.Checked;
   //GetModuleFileName(GetWindowThreadProcessId(FindWindow('Shell_TrayWnd', nil)),ex,2048);
-  InjectDLL(4032,PChar(ExtractFilePath(ParamStr(0))+'TaskbarDll.dll'));
+
+  InjectDLL(GetProcessIdByName('explorer.exe'),PChar(ExtractFilePath(ParamStr(0))+'TaskbarDll.dll'));
+end;
+
+function TForm1.GetProcessIdByName(s: String): DWORD;
+var
+  Proc: TProcessEntry32;
+  hSnap: HWND;
+  Looper: BOOL;
+begin
+  Result := 0;
+  Proc.dwSize := SizeOf(Proc);
+  hSnap := CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
+  Looper := Process32First(hSnap, Proc);
+  while Integer(Looper) <> 0 do
+  begin
+    if Proc.szExeFile = s then
+    begin
+      Result := Proc.th32ProcessID;
+      Break;
+    end;
+    Looper := Process32Next(hSnap, Proc);
+  end;
+  CloseHandle(hSnap);
 end;
 
 procedure TForm1.GetTaskbarWindows;
@@ -253,7 +278,7 @@ begin
         Exit(0);
 
       hKernel := GetModuleHandle(Kernel32);
-      pLoadLibrary := GetProcAddress(hKernel, 'LoadLibrary');
+      pLoadLibrary := GetProcAddress(hKernel, 'LoadLibraryW');
 
       hThread := CreateRemoteThread(hProc, nil, 0, pLoadLibrary, pRemoteBuffer,
         0, dwThreadID);

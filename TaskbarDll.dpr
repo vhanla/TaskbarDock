@@ -11,6 +11,11 @@ library TaskbarDll;
   using PChar or ShortString parameters. }
 
 uses
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   System.SysUtils,
   System.Classes,
   Variants,
@@ -24,6 +29,8 @@ const
   ACCENT_ENABLE_GRADIENT = 1;
   ACCENT_ENABLE_TRANSPARENTGRADIENT = 2;
   ACCENT_ENABLE_BLURBEHIND = 3;
+  ACCENT_ENABLE_BLURBEHINDFLUENT = 4;
+  ACCENT_DEFAULT = 99;
 
 type
   AccentPolicy = packed record
@@ -45,11 +52,26 @@ var
   TrampolineSetWindowCompositionAttribute: function (hWnd: HWND; var data: WindowCompositionAttributeData): Integer;
   stdcall = nil;
 
+function SetWindowCompositionAttribute(Wnd: HWND; const AttrData: WindowCompositionAttributeData): BOOL; stdcall;
+  external user32 Name 'SetWindowCompositionAttribute';
+
 function SetWindowCompositionAttributeHooked (hWnd: HWND; var data: WindowCompositionAttributeData): Integer;
 var
+  accent: AccentPolicy;
   _data: WindowCompositionAttributeData;
 begin
-  _data.Attribute := ACCENT_ENABLE_TRANSPARENTGRADIENT;
+  if hwnd = FindWindow('Shell_TrayWnd',nil) then
+  begin
+    OutputDebugString(PChar('HWND: '+inttostr(hwnd)));
+    accent.AccentState := ACCENT_ENABLE_TRANSPARENTGRADIENT;
+    accent.GradientColor := $00000;//accent.GradientColor;
+    _data.Attribute := WCA_ACCENT_POLICY;
+    _data.SizeOfData := SizeOf(accent);
+    _data.Data := @accent;
+  end
+  else
+    _data := data;
+
   Result := TrampolineSetWindowCompositionAttribute(hWnd, _data);
 end;
 
@@ -73,6 +95,8 @@ end;
 procedure ThisIsTheThread;
 begin
 //  MessageBoxW(0, 'Hola chico', 'ñol', 0);
+  @TrampolineSetWindowCompositionAttribute
+    := InterceptCreate(@SetWindowCompositionAttribute,@SetWindowCompositionAttributeHooked);
 end;
 
 procedure Run;
@@ -89,12 +113,22 @@ begin
   case Reason of
     DLL_PROCESS_ATTACH:
     begin
+      OutputDebugString('hola');
       Run;
+    end;
+    DLL_PROCESS_DETACH:
+    begin
+      if Assigned(@TrampolineSetWindowCompositionAttribute) then
+      begin
+        InterceptRemove(@TrampolineSetWindowCompositionAttribute);
+        TrampolineSetWindowCompositionAttribute := nil;
+      end;
     end;
   end;
 end;
 
 begin
+  OutputDebugString('empezamos');
   DllProc := mydllproc;
   mydllproc(DLL_PROCESS_ATTACH);
 end.

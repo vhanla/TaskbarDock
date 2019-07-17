@@ -2,8 +2,8 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 201
-  ClientWidth = 447
+  ClientHeight = 347
+  ClientWidth = 535
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -38,6 +38,7 @@ object Form1: TForm1
     end
     object mnuFull: TMenuItem
       Caption = '&Full'
+      Visible = False
       OnClick = mnuFullClick
     end
     object mnuTransparent: TMenuItem
