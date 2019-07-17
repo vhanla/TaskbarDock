@@ -3,9 +3,10 @@ unit main;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus, Registry, IniFiles,
-  OTLParallel, OTLTaskControl, taskbar;
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus,
+  Registry, IniFiles, TlHelp32,
+  OTLParallel, OTLTaskControl, taskbar, madExceptVcl;
 
 type
   TForm1 = class(TForm)
@@ -27,6 +28,7 @@ type
     mnuAbout: TMenuItem;
     N3: TMenuItem;
     mnuStartwithWindows: TMenuItem;
+    MadExceptionHandler1: TMadExceptionHandler;
     procedure mnuPinnedIconsClick(Sender: TObject);
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -56,6 +58,8 @@ type
     procedure SetAutoStart(runwithwindows: Boolean = True);
     procedure LoadINI;
     procedure SaveINI;
+    function InjectDLL(const dwPID: DWORD; DLLPATH: PChar): Integer;
+    function GetProcessIdByName(s: String): DWORD;
   public
     { Public declarations }
   protected
@@ -173,8 +177,35 @@ begin
 end;
 
 procedure TForm1.mnuFullClick(Sender: TObject);
+var
+  ex: PWideChar;
 begin
-  mnuFull.Checked := not mnuFull.Checked;
+//  mnuFull.Checked := not mnuFull.Checked;
+  //GetModuleFileName(GetWindowThreadProcessId(FindWindow('Shell_TrayWnd', nil)),ex,2048);
+
+  InjectDLL(GetProcessIdByName('explorer.exe'),PChar(ExtractFilePath(ParamStr(0))+'TaskbarDll.dll'));
+end;
+
+function TForm1.GetProcessIdByName(s: String): DWORD;
+var
+  Proc: TProcessEntry32;
+  hSnap: HWND;
+  Looper: BOOL;
+begin
+  Result := 0;
+  Proc.dwSize := SizeOf(Proc);
+  hSnap := CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
+  Looper := Process32First(hSnap, Proc);
+  while Integer(Looper) <> 0 do
+  begin
+    if Proc.szExeFile = s then
+    begin
+      Result := Proc.th32ProcessID;
+      Break;
+    end;
+    Looper := Process32Next(hSnap, Proc);
+  end;
+  CloseHandle(hSnap);
 end;
 
 procedure TForm1.GetTaskbarWindows;
@@ -220,6 +251,49 @@ begin
   );
 
   fwm_TaskbarRestart := RegisterWindowMessage('TaskbarCreated');
+end;
+
+function TForm1.InjectDLL(const dwPID: DWORD; DLLPATH: PChar): Integer;
+const
+  Kernel32 = 'kernel32.dll';
+var
+  dwThreadID: Cardinal;
+  hProc, hThread, hKernel: THandle;
+  BytesToWrite, BytesWritten: SIZE_T;
+  pRemoteBuffer, pLoadLibrary: Pointer;
+begin
+  hProc := OpenProcess(PROCESS_CREATE_THREAD or PROCESS_QUERY_INFORMATION or
+    PROCESS_VM_OPERATION or PROCESS_VM_WRITE or PROCESS_VM_READ, False, dwPID);
+  if hProc = 0 then
+    Exit(0);
+  try
+    BytesToWrite := SizeOf(WideChar) * (Length(DLLPATH) + 1);
+    pRemoteBuffer := VirtualAllocEx(hProc, nil, BytesToWrite, MEM_COMMIT,
+      PAGE_READWRITE);
+    if pRemoteBuffer = nil then
+      Exit(0);
+    try
+      if not WriteProcessMemory(hProc, pRemoteBuffer, DLLPATH, BytesToWrite,
+        BytesWritten) then
+        Exit(0);
+
+      hKernel := GetModuleHandle(Kernel32);
+      pLoadLibrary := GetProcAddress(hKernel, 'LoadLibraryW');
+
+      hThread := CreateRemoteThread(hProc, nil, 0, pLoadLibrary, pRemoteBuffer,
+        0, dwThreadID);
+      try
+        WaitForSingleObject(hThread, INFINITE);
+      finally
+        CloseHandle(hThread);
+      end;
+    finally
+      VirtualFreeEx(hProc, pRemoteBuffer, 0, MEM_RELEASE);
+    end;
+  finally
+    CloseHandle(hProc);
+  end;
+  Exit(1);
 end;
 
 procedure TForm1.LoadINI;
@@ -302,8 +376,8 @@ end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
 begin
-  Taskbar2.CenterAppsButtons;
-  Taskbar.CenterAppsButtons;
+  Taskbar2.CenterAppsButtons(mnuCenter.Checked);
+  Taskbar.CenterAppsButtons(mnuCenter.Checked);
 end;
 
 procedure TForm1.tmrOptionsTimer(Sender: TObject);

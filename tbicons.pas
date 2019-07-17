@@ -19,6 +19,7 @@ type
     { Private declarations }
     AppData: String;
     function ListLnkFiles: Integer;
+    procedure MakeBackup;
   public
     { Public declarations }
   end;
@@ -115,6 +116,11 @@ begin
     FreeAndNil(BannedLnks);
     ListBox1.Items.EndUpdate;
   end;
+end;
+
+procedure TForm2.MakeBackup;
+begin
+
 end;
 
 end.
