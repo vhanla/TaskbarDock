@@ -90,7 +90,7 @@ type
     destructor Destroy; override;
     procedure Transparent;
     procedure UpdateTaskbarInfo;
-    procedure CenterAppsButtons(center: Boolean = True);
+    procedure CenterAppsButtons(center: Boolean = True; relative: Boolean = False);
     procedure Hide(handle: THandle);
     procedure Show(handle: THandle);
     procedure StartBtnVisible(visible: Boolean = True);
@@ -112,7 +112,7 @@ implementation
 
 { TTaskbar }
 
-procedure TTaskbar.CenterAppsButtons(center: Boolean = True);
+procedure TTaskbar.CenterAppsButtons(center: Boolean = True; relative: Boolean = False);
 var
   aLeft, aTop: Integer;
 begin
@@ -129,13 +129,17 @@ begin
   end
   else
   begin
+    //center buttons
     if (Position = TTaskPos.Left) or (Position = TTaskPos.Right) then
     begin
       if _monitor = 1 then
       begin
         if (_appsBtnBottom - _appsBtnTop + 6) > _MSTaskSwWClass.Rect.Height then Exit;
 
-        aTop := (_rect.Height div 2) - _MSTaskSwWClass.Rect.Top - ((_appsBtnBottom - _appsBtnTop) div 2);
+        if relative then
+          aTop := (_MSTaskSwWClass.Rect.Height div 2) - ((_appsBtnBottom - _appsBtnTop) div 2)
+        else
+          aTop := (_rect.Height div 2) - _MSTaskSwWClass.Rect.Top - ((_appsBtnBottom - _appsBtnTop) div 2);
 
         SetWindowPos(_MSTaskListWClass.Handle, 0, 0, aTop, _MSTaskListWClass.Rect.Width,  (_appsBtnBottom - _appsBtnTop + 6), SWP_NOACTIVATE);
       end
@@ -143,7 +147,10 @@ begin
       begin
         if (abs(_appsBtnBottom - _appsBtnTop) + 6) > abs(_WorkerW.Rect.Bottom - _WorkerW.Rect.Top) then Exit;
 
-        aTop := (_rect.Height div 2) - abs(_WorkerW.Rect.Top-_rect.Top) - ((_appsBtnBottom - _appsBtnTop) div 2);
+        if relative then
+          aTop := (_WorkerW.Rect.Height div 2) - ((_appsBtnBottom - _appsBtnTop) div 2)
+        else
+          aTop := (_rect.Height div 2) - abs(_WorkerW.Rect.Top-_rect.Top) - ((_appsBtnBottom - _appsBtnTop) div 2);
 
         SetWindowPos(_MSTaskListWClass.Handle, 0, 0, aTop, _MSTaskListWClass.Rect.Width, (_appsBtnBottom - _appsBtnTop + 6), SWP_NOACTIVATE);
       end;
@@ -155,7 +162,10 @@ begin
       begin
         if (_appsBtnRight - _appsBtnLeft + 6) > _MSTaskSwWClass.Rect.Width then Exit;
 
-        aLeft := (_rect.Width div 2) - _MSTaskSwWClass.Rect.Left - ((_appsBtnRight - _appsBtnLeft) div 2);
+        if relative then
+          aLeft := (_MSTaskSwWClass.Rect.Width div 2) - ((_appsBtnRight - _appsBtnLeft) div 2)
+        else
+          aLeft := (_rect.Width div 2) - _MSTaskSwWClass.Rect.Left - ((_appsBtnRight - _appsBtnLeft) div 2);
 
         SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
       end
@@ -163,7 +173,10 @@ begin
       begin
         if (abs(_appsBtnRight - _appsBtnLeft) + 6) > abs(_WorkerW.Rect.Right - _WorkerW.Rect.Left) then Exit;
 
-        aLeft := (_rect.Width div 2) - abs(_WorkerW.Rect.Left-_rect.Left) - ((_appsBtnRight - _appsBtnLeft) div 2);
+        if relative then
+          aLeft := (_WorkerW.Rect.Width div 2) - ((_appsBtnRight - _appsBtnLeft) div 2)
+        else
+          aLeft := (_rect.Width div 2) - abs(_WorkerW.Rect.Left-_rect.Left) - ((_appsBtnRight - _appsBtnLeft) div 2);
 
         SetWindowPos(_MSTaskListWClass.Handle, 0, aLeft, 0, (_appsBtnRight - _appsBtnLeft + 6), _MSTaskListWClass.Rect.Height, SWP_NOACTIVATE);
       end;  

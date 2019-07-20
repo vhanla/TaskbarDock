@@ -23,7 +23,7 @@ begin
     Exit;
 
   Application.Initialize;
-  Application.MainFormOnTaskbar := False;
+  Application.MainFormOnTaskbar := True;
   Application.ShowMainForm := False;
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TForm2, Form2);

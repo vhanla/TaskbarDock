@@ -6,10 +6,12 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Menus,
   Registry, IniFiles, TlHelp32,
-  OTLParallel, OTLTaskControl, taskbar, madExceptVcl;
+  OTLParallel, OTLTaskControl, taskbar, madExceptVcl, UCL.TUCaptionBar,
+  UCL.TUThemeManager, UCL.TUForm, UCL.TUButton, UCL.TUSymbolButton, UCL.TUPanel,
+  UCL.IntAnimation, UCL.TUScrollBox, UCL.TUContextMenu;
 
 type
-  TForm1 = class(TForm)
+  TForm1 = class(TUForm)
     TrayIcon1: TTrayIcon;
     PopupMenu1: TPopupMenu;
     mnuPinnedIcons: TMenuItem;
@@ -29,6 +31,21 @@ type
     N3: TMenuItem;
     mnuStartwithWindows: TMenuItem;
     MadExceptionHandler1: TMadExceptionHandler;
+    UCaptionBar1: TUCaptionBar;
+    UThemeManager1: TUThemeManager;
+    UButton1: TUButton;
+    UButton2: TUButton;
+    UButton3: TUButton;
+    UButton4: TUButton;
+    UPanel1: TUPanel;
+    USymbolButton1: TUSymbolButton;
+    UScrollBox1: TUScrollBox;
+    UContextMenu1: TUContextMenu;
+    About1: TMenuItem;
+    N4: TMenuItem;
+    Exit2: TMenuItem;
+    USymbolButton2: TUSymbolButton;
+    mnuCenterRelative: TMenuItem;
     procedure mnuPinnedIconsClick(Sender: TObject);
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -46,6 +63,11 @@ type
     procedure mnuTransparentClick(Sender: TObject);
     procedure mnuAboutClick(Sender: TObject);
     procedure mnuStartwithWindowsClick(Sender: TObject);
+    procedure TrayIcon1DblClick(Sender: TObject);
+    procedure UButton1Click(Sender: TObject);
+    procedure USymbolButton1Click(Sender: TObject);
+    procedure Exit2Click(Sender: TObject);
+    procedure mnuCenterRelativeClick(Sender: TObject);
   private
     { Private declarations }
     Taskbar: TTaskbar;
@@ -116,10 +138,16 @@ begin
   mnuCenter.Checked := not mnuCenter.Checked;
   tmrCenter.Enabled := mnuCenter.Checked;
 
-  Taskbar.CenterAppsButtons(mnuCenter.Checked);
+  Taskbar.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
 end;
 
 procedure TForm1.Exit1Click(Sender: TObject);
+begin
+  CloseApp := True;
+  Close;
+end;
+
+procedure TForm1.Exit2Click(Sender: TObject);
 begin
   CloseApp := True;
   Close;
@@ -146,6 +174,8 @@ begin
     if not ThreadIsRunning then
     begin
       SaveINI;
+      Taskbar.CenterAppsButtons(False);
+      Taskbar2.CenterAppsButtons(False);
       CanClose := True
     end
     else
@@ -159,6 +189,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  Self.ThemeManager := ThemeManager;
   AutoStartState;
   Init;
   tmrUpdateTBinfo.Enabled := True;
@@ -306,6 +337,7 @@ begin
     mnuTray.Checked := ini.ReadBool('TaskbarDock','ShowTrayArea', True);
     mnuFull.Checked := ini.ReadBool('TaskbarDock','AbsoluteWidth', False);
     mnuCenter.Checked := ini.ReadBool('TaskbarDock','CenterIcons', False);
+    mnuCenterRelative.Checked := ini.ReadBool('TaskbarDock','CenterRelative', False);
     tmrCenter.Enabled := mnuCenter.Checked;
     mnuTransparent.Checked := ini.ReadBool('TaskbarDock','Transparent', False);
   finally
@@ -323,6 +355,7 @@ begin
     ini.WriteBool('TaskbarDock','ShowTrayArea', mnuTray.Checked);
     ini.WriteBool('TaskbarDock','AbsoluteWidth', mnuFull.Checked);
     ini.WriteBool('TaskbarDock','CenterIcons', mnuCenter.Checked);
+    ini.WriteBool('TaskbarDock','CenterRelative', mnuCenter.Checked);
     ini.WriteBool('TaskbarDock','Transparent', mnuTransparent.Checked);
   finally
     ini.Free;
@@ -342,6 +375,11 @@ end;
 procedure TForm1.mnuTrayClick(Sender: TObject);
 begin
   mnuTray.Checked := not mnuTray.Checked;
+end;
+
+procedure TForm1.mnuCenterRelativeClick(Sender: TObject);
+begin
+  mnuCenterRelative.Checked := not mnuCenterRelative.Checked;
 end;
 
 procedure TForm1.SetAutoStart(runwithwindows: Boolean);
@@ -376,8 +414,11 @@ end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
 begin
-  Taskbar2.CenterAppsButtons(mnuCenter.Checked);
-  Taskbar.CenterAppsButtons(mnuCenter.Checked);
+  if tmrUpdateTBinfo.Enabled then
+  begin
+    Taskbar2.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
+    Taskbar.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
+  end;
 end;
 
 procedure TForm1.tmrOptionsTimer(Sender: TObject);
@@ -457,6 +498,43 @@ begin
   Taskbar2.UpdateTaskbarHandle;
   Taskbar2.UpdateTaskbarInfo;
   Taskbar.UpdateTaskbarInfo;
+end;
+
+procedure TForm1.TrayIcon1DblClick(Sender: TObject);
+begin
+  if IsWindowVisible(Self.Handle) then
+    Hide
+  else
+    Show;
+end;
+
+procedure TForm1.UButton1Click(Sender: TObject);
+begin
+  CloseApp := True;
+  Close
+end;
+
+procedure TForm1.USymbolButton1Click(Sender: TObject);
+var
+  NewPos: Integer;
+  Ani: TIntAni;
+  DPI: Single;
+begin
+  DPI := Self.PixelsPerInch / 96;
+  if UPanel1.Width <> Round(45 * DPI) then
+    NewPos := Round(45 * DPI)
+  else
+    NewPos := Round(220 * DPI);
+
+  Ani := TIntAni.Create(akOut, afkQuartic, UPanel1.Width, NewPos,
+    procedure (Value: Integer)
+    begin
+      UPanel1.Width := Value;
+    end, True);
+  Ani.Step := 20;
+  Ani.Duration := 200;
+
+  Ani.Start;
 end;
 
 procedure TForm1.WndProc(var Msg: TMessage);
