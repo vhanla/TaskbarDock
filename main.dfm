@@ -247,12 +247,12 @@ object Form1: TForm1
     Left = 280
     Top = 240
     object mnuStart: TMenuItem
-      Caption = '&Start'
+      Caption = 'Show &Start button'
       Checked = True
       OnClick = mnuStartClick
     end
     object mnuTray: TMenuItem
-      Caption = '&Tray'
+      Caption = 'Show &Tray area'
       Checked = True
       OnClick = mnuTrayClick
     end
