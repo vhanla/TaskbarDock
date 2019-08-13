@@ -42,3 +42,6 @@ Right click it and test this beta.
 This is still in early development, so bare in mind it has a lot of improvement to be done.
 
 Feel free to fork it and send me PRs or use the Issues section to give your feedback/suggestions.
+
+## Feeback and WIP
+You can see/discuss/suggest/ ideas, work in progress, at https://status.codigobit.net/signup_user_complete/?id=rudrdcpogjbjupxhuwz5nyp74r feel free to join the discussion and even help the development.
