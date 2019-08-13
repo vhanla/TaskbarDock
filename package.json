@@ -1,0 +1,22 @@
+{
+  "name": "taskbardock",
+  "version": "1.0.0",
+  "description": "Changelog manager for TaskbarDock",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vhanla/taskbardock.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vhanla/taskbardock/issues"
+  },
+  "homepage": "https://github.com/vhanla/taskbardock#readme",
+  "changelog": {
+    "out": "gitchangelog.md"
+  }
+}
