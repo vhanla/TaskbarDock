@@ -12,11 +12,50 @@ uses classes, windows, graphics, registry, dwmapi, oleacc, variants, forms;
 
 const
   WCA_ACCENT_POLICY = 19;
+  ACCENT_DISABLED = 0;
   ACCENT_ENABLE_GRADIENT = 1;
   ACCENT_ENABLE_TRANSPARENTGRADIENT = 2;
   ACCENT_ENABLE_BLURBEHIND = 3;
+  ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
 
+  //https://stackoverflow.com/a/22105803/537347 Windows 8 or newer only
+  IID_AppVisibility: TGUID = '{2246EA2D-CAEA-4444-A3C4-6DE827E44313}';
+  CLSID_AppVisibility: TGUID = '{7E5FE3D9-985F-4908-91F9-EE19F9FD1514}';
+  //IID_IAppVisibilityEvents: TGUID = '{6584CE6B-7D82-49C2-89C9-C6BC02BA8C38}';
 type
+
+  MONITOR_APP_VISIBILITY = (
+    MAV_UNKNOWN = 0,
+    MAV_NO_APP_VISIBLE = 1,
+    MAV_APP_VISIBLE = 2
+  );
+// *********************************************************************//
+// Interface: IAppVisibilityEvents
+// Flags:     (0)
+// GUID:      {6584CE6B-7D82-49C2-89C9-C6BC02BA8C38}
+// *********************************************************************//
+  IAppVisibilityEvents = interface(IUnknown)
+    ['{6584CE6B-7D82-49C2-89C9-C6BC02BA8C38}']
+    function AppVisibilityOnMonitorChanged(hMonitor: HMONITOR;
+              previousMode: MONITOR_APP_VISIBILITY;
+              currentMode: MONITOR_APP_VISIBILITY):HRESULT; stdcall;
+    function LauncherVisibilityChange(currentVisibleState: BOOL): HRESULT; stdcall;
+  end;
+
+
+// *********************************************************************//
+// Interface: IAppVisibility
+// Flags:     (0)
+// GUID:      {2246EA2D-CAEA-4444-A3C4-6DE827E44313}
+// *********************************************************************//
+  IAppVisibility = interface(IUnknown)
+    ['{2246EA2D-CAEA-4444-A3C4-6DE827E44313}']
+    function GetAppVisibilityOnMonitor(monitor: HMONITOR; out pMode: MONITOR_APP_VISIBILITY): HRESULT; stdcall;
+    function IsLauncherVisible(out pfVisible: BOOL): HRESULT; stdcall;
+    function Advise(pCallBack: IAppVisibilityEvents; out pdwCookie: DWORD): HRESULT; stdcall;
+    function Unadvise(dwCookie: DWORD): HRESULT; stdcall;
+  end;
+
   AccentPolicy = packed record
     AccentState: Integer;
     AccentFlags: Integer;
@@ -44,6 +83,7 @@ type
     Rect: TRect;
   end;
 
+  PTaskbar = ^TTaskbar;
   TTaskbar = class
   private
     _reg: TRegistry;
@@ -72,7 +112,9 @@ type
     function _IsTransparent: Boolean;
     procedure HideStartBtn;
     procedure ShowStartBtn;
+    function _getIconsRect: TRect;
   public
+    property Handle: THandle read _handle;
     property Position: TTaskPosition read _position write _position;
     property MonitoID: Integer read _monitorId;
     property MonitorRect: TRect read _monitorRect;
@@ -82,7 +124,8 @@ type
 
     property AppsLeft: Integer read _appsBtnLeft;
     property AppsRight: Integer read _appsBtnRight;
-    property MSTaskList: TRect read _MSTaskListWClass.Rect;
+    property MSTaskListRect: TRect read _getIconsRect;
+    property MSTaskRect: TRect read _MSTaskSwWClass.Rect;
     property TrayRect: TRect read _trayNotifyWnd.Rect;
     property StartRect: TRect read _start.Rect;
 
@@ -98,6 +141,18 @@ type
     procedure FullTaskBar;
     procedure UpdateTaskbarHandle;
     function GetMonitor: TMonitor;
+    function IsStartMenuVisible: Boolean;
+  end;
+
+  TTaskbars = class(TList)
+  private
+    function Get(Index: Integer): PTaskbar;
+  public
+    function Add(Value: TTaskbar): Integer;
+    procedure Refresh;
+    procedure CenterAppsButtons(center: Boolean = True; relative: Boolean = False);
+    procedure Notify(Ptr: Pointer; Action: TListNotification); override;
+    property Items[Index: Integer]: PTaskbar read Get; default;
   end;
 
   function SetWindowCompositionAttribute(hWnd: HWND; var data: WindowCompositionAttributeData): Integer; stdcall;
@@ -111,6 +166,8 @@ type
 implementation
 
 { TTaskbar }
+
+uses ActiveX, Shlobj, ComObj;
 
 procedure TTaskbar.CenterAppsButtons(center: Boolean = True; relative: Boolean = False);
 var
@@ -211,7 +268,7 @@ begin
 
   if _appsBtnLeft = 0 then Exit;
 
-  SetWindowPos(_MSTaskSwWClass.Handle, 0, 0, 0, _rect.Width, _MSTaskSwWClass.Rect.Height, SWP_NOACTIVATE);
+  SetWindowPos(_MSTaskSwWClass.Handle, 0, 0, 0, _rect.Width, _MSTaskSwWClass.Rect.Height, SWP_NOSENDCHANGING);
 end;
 
 function TTaskbar.GetMonitor: TMonitor;
@@ -239,6 +296,7 @@ procedure TTaskbar.HideStartBtn;
 begin
   Hide(_start.Handle);
 end;
+
 
 procedure TTaskbar.NotifyAreaVisible(visible: Boolean);
 begin
@@ -277,12 +335,14 @@ begin
   if _notaskbar then Exit;
 
   accent.AccentState := _transstyle;
-//  accent.GradientColor := $00000000;
+  accent.GradientColor := $00000000;
+  accent.AccentFlags := 2; // 2: seems to hide the border
   data.Attribute := WCA_ACCENT_POLICY;
   data.SizeOfData := SizeOf(accent);
   data.Data := @accent;
 
-  SetWindowCompositionAttribute(_handle, data);
+  if _transstyle = ACCENT_ENABLE_TRANSPARENTGRADIENT then
+    SetWindowCompositionAttribute(_handle, data);
 end;
 
 procedure TTaskbar.UpdateTaskbarHandle;
@@ -493,6 +553,37 @@ begin
   end;
 end;
 
+function TTaskbar.IsStartMenuVisible: Boolean;
+var
+  acc: IAppVisibility;
+  res: HRESULT;
+  isLauncherVisible: BOOL;
+begin
+  Result := False;
+  // Initialization of COM is required to use the AppVisibility (CLSID_AppVisibility) object
+  res := CoInitializeEx(nil, COINIT_APARTMENTTHREADED);
+  if Succeeded(res) then
+  begin
+    // Create the App Visibility component
+    res := CoCreateInstance(CLSID_AppVisibility, nil, CLSCTX_ALL, IID_AppVisibility, acc);
+    if Succeeded(res) then
+    begin
+      res := acc.IsLauncherVisible(isLauncherVisible);
+      if Succeeded(res) then
+        Result := Boolean(isLauncherVisible);
+    end;
+
+  end;
+
+end;
+
+function TTaskbar._getIconsRect: TRect;
+begin
+  Result := _MSTaskListWClass.Rect;
+
+  Result.Right := _appsBtnRight;
+end;
+
 function TTaskbar._IsTransparent: Boolean;
 begin
   _translucent := False;
@@ -509,6 +600,69 @@ begin
     _reg.Free;
   end;
   Result := _translucent;
+end;
+
+{ TTaskbars }
+
+function TTaskbars.Add(Value: TTaskbar): Integer;
+begin
+  Result := inherited Add(Value);
+end;
+
+procedure TTaskbars.CenterAppsButtons(center, relative: Boolean);
+var
+  I: Integer;
+begin
+  for I := 0 to Count - 1 do
+    Items[I].CenterAppsButtons(center, relative);
+end;
+
+function TTaskbars.Get(Index: Integer): PTaskbar;
+begin
+  Result := PTaskbar(inherited Get(Index));
+end;
+
+procedure TTaskbars.Notify(Ptr: Pointer; Action: TListNotification);
+begin
+  inherited;
+
+  if Action = lnDeleted then
+    FreeMem(Ptr);
+end;
+
+procedure TTaskbars.Refresh;
+var
+   LHDesktop: HWND;
+   LHWindow: HWND;
+   LHParent: HWND;
+   LExStyle: DWORD;
+   I: integer;
+   AppClassName: array[0..255] of char;
+   Cloaked: Cardinal;
+   Taskbar: TTaskbar;
+begin
+  LHDesktop:=GetDesktopWindow;
+  LHWindow:=GetWindow(LHDesktop,GW_CHILD);
+
+  while LHWindow <> 0 do
+  begin
+    GetClassName(LHWindow, AppClassName, 255);
+    LHParent:=GetWindowLong(LHWindow,GWL_HWNDPARENT);
+    LExStyle:=GetWindowLong(LHWindow,GWL_EXSTYLE);
+
+    if IsWindowVisible(LHWindow)
+    and (AppClassName = 'Shell_TrayWnd')
+    or (AppClassName = 'Shell_SecondaryTrayWnd')
+    and ((LHParent=0)or(LHParent=LHDesktop))
+    and (Screen.MonitorFromWindow(LHWindow).MonitorNum <> 0)
+    then
+    begin
+      Taskbar := TTaskbar.Create();
+      Add(Taskbar);
+    end;
+    LHWindow:=GetWindow(LHWindow, GW_HWNDNEXT);
+  end;
+
 end;
 
 end.
