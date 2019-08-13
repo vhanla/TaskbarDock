@@ -55,14 +55,15 @@ rem goto OPTIONS
 goto :eof
 
 :buildrelease
-SET MSBUILD="C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe"
+REM SET MSBUILD="C:\Windows\Microsoft.NET\Framework\v4.0.30319\msbuild.exe"
+SET MSBUILD="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
 SET RSVARS="C:\Program Files (x86)\Embarcadero\Studio\20.0\bin\rsvars.bat"
 
 call %RSVARS%
 
 for /F %%i in (TAG) do set "TAG=%%i"
 
-%MSBUILD% %PROJECT% "/t:Clean,Make" "/p:config=Release" "/verbosity:minimal"
+%MSBUILD% %PROJECT% "/t:Clean,Make" "/p:config=Release" "/verbosity:minimal" "/bl"
 
 rem if %ERRORLEVEL% EQU 0 GOTO END
 
