@@ -44,4 +44,4 @@ This is still in early development, so bare in mind it has a lot of improvement 
 Feel free to fork it and send me PRs or use the Issues section to give your feedback/suggestions.
 
 ## Feeback and WIP
-You can see/discuss/suggest/ ideas, work in progress, at https://status.codigobit.net/signup_user_complete/?id=rudrdcpogjbjupxhuwz5nyp74r feel free to join the discussion and even help the development.
+You can see/discuss/suggest/ ideas, work in progress, at [#Slack](https://join.slack.com/t/codigobit/shared_invite/enQtNzI0Nzk2NDU5OTg4LWE2Zjk2OGYxNWZmOGVjMzRmNDc4YTAyNzY5ZjVkYWUzZTc1MzJkNjcxNzQ1ODI4ZjkxNWE0ZTcyMDEyYzUzZTE) feel free to join the discussion and even help the development.
