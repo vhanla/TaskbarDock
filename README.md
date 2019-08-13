@@ -45,3 +45,7 @@ Feel free to fork it and send me PRs or use the Issues section to give your feed
 
 ## Feeback and WIP
 You can see/discuss/suggest/ ideas, work in progress, at [#Slack](https://join.slack.com/t/codigobit/shared_invite/enQtNzI0Nzk2NDU5OTg4LWE2Zjk2OGYxNWZmOGVjMzRmNDc4YTAyNzY5ZjVkYWUzZTc1MzJkNjcxNzQ1ODI4ZjkxNWE0ZTcyMDEyYzUzZTE) feel free to join the discussion and even help the development.
+
+## Support my work
+
+If you like my work, maybe you can consider supporting me https://apps.codigobit.info/p/support.html, I wish I had more time to continue improving this little tool. 
