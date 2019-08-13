@@ -108,6 +108,8 @@
         <Icon_MainIcon>icon.ico</Icon_MainIcon>
         <DCC_Define>madExcept;$(DCC_Define)</DCC_Define>
         <DCC_MapFile>3</DCC_MapFile>
+        <PostBuildEvent><![CDATA[$(WINDIR)\System32\cmd.exe FastMM4 >"$(OUTPUTDIR)$(OUTPUTNAME)_MemoryManager_EventLog.txt"
+$(PostBuildEvent)]]></PostBuildEvent>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
@@ -148,10 +150,19 @@
         <DCCReference Include="main.pas">
             <Form>Form1</Form>
         </DCCReference>
-        <DCCReference Include="tbicons.pas">
+        <DCCReference Include="taskbar.pas"/>
+        <DCCReference Include="frmIcons.pas">
+            <Form>frameIcons</Form>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="skinform.pas">
             <Form>Form2</Form>
         </DCCReference>
-        <DCCReference Include="taskbar.pas"/>
+        <DCCReference Include="functions.pas"/>
+        <DCCReference Include="frmSkins.pas">
+            <Form>frmSkin</Form>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -190,9 +201,9 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Win64\Debug\TaskbarDock.rsm" Configuration="Debug" Class="DebugSymbols">
-                    <Platform Name="Win64">
-                        <RemoteName>TaskbarDock.rsm</RemoteName>
+                <DeployFile LocalName="Win32\Release\TaskbarDock.exe" Configuration="Release" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>TaskbarDock.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -948,4 +959,12 @@
     <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
     <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
     <Import Project="$(MSBuildProjectName).deployproj" Condition="Exists('$(MSBuildProjectName).deployproj')"/>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Win32'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>$(WINDIR)\System32\cmd.exe FastMM4 &gt;&quot;$(OUTPUTDIR)$(OUTPUTNAME)_MemoryManager_EventLog.txt&quot;</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
 </Project>

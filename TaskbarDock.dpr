@@ -1,6 +1,9 @@
 program TaskbarDock;
 
 uses
+  {$IFDEF DEBUG}
+  FastMM4,
+  {$ENDIF }
   madExcept,
   madLinkDisAsm,
   madListHardware,
@@ -10,8 +13,11 @@ uses
   Windows,
   SysUtils,
   main in 'main.pas' {Form1},
-  tbicons in 'tbicons.pas' {Form2},
-  taskbar in 'taskbar.pas';
+  taskbar in 'taskbar.pas',
+  frmIcons in 'frmIcons.pas' {frameIcons: TFrame},
+  skinform in 'skinform.pas' {Form2},
+  functions in 'functions.pas',
+  frmSkins in 'frmSkins.pas' {frmSkin: TFrame};
 
 {$R *.res}
 
