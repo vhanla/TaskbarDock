@@ -8,7 +8,7 @@ unit taskbar;
 
 interface
 
-uses classes, windows, graphics, registry, dwmapi, oleacc, variants, forms, sysutils;
+uses classes, windows, graphics, registry, dwmapi, oleacc, variants, forms, sysutils, shellapi;
 
 const
   WCA_ACCENT_POLICY = 19;
@@ -171,6 +171,9 @@ type
   private
     FCount: Integer;
     function Get(Index: Integer): PTaskbar;
+    function GetMainTaskbar: PTaskbar;
+    function GetAutoHideInfo: Boolean;
+    procedure SetAutoHide(state: Boolean);
   public
     function Add(Value: PTaskbar): Integer;
     procedure Refresh;
@@ -179,6 +182,8 @@ type
     procedure NotifyAreaVisible(visible: Boolean = True);
     procedure Notify(Ptr: Pointer; Action: TListNotification); override;
     property Items[Index: Integer]: PTaskbar read Get; default;
+    property MainTaskbar: PTaskbar read GetMainTaskbar;
+    property Autohide: Boolean read GetAutoHideInfo write SetAutoHide;
     procedure UpdateTaskbarInfo;
     procedure Transparent;
 
@@ -746,6 +751,33 @@ begin
   Result := PTaskbar(inherited Get(Index));
 end;
 
+function TTaskbars.GetAutoHideInfo: Boolean;
+var
+  ABData: TAppBarData;
+begin
+  Result := False;
+  if (SHAppBarMessage(ABM_GETSTATE, ABData) and ABS_AUTOHIDE) = ABS_AUTOHIDE then
+    Result := True;
+end;
+
+function TTaskbars.GetMainTaskbar: PTaskbar;
+var
+  I: Integer;
+  found: Boolean;
+begin
+  found := False;
+  I := 0;
+  while (I < Count) or not found do
+  begin
+    if Items[I].MainTaskbar then
+    begin
+      Result := Items[I];
+      found := True;
+    end;
+    Inc(I);
+  end;
+end;
+
 function TTaskbars.IsStartMenuVisible: Boolean;
 var
   acc: IAppVisibility;
@@ -887,6 +919,19 @@ begin
     ShowWindow(Items[I]._start.Handle, SW_SHOWNOACTIVATE);
 end;
 
+procedure TTaskbars.SetAutoHide(state: Boolean);
+var
+  ABData: TAppBarData;
+begin
+  ABData.cbSize := SizeOf(ABData);
+  if not state then
+  ABData.lParam := ABS_ALWAYSONTOP
+  else
+  ABData.lParam := ABS_AUTOHIDE;
+
+  SHAppBarMessage(ABM_SETSTATE,ABData);
+end;
+
 procedure TTaskbars.StartBtnVisible(Index:Integer; Visible: Boolean);
 begin
   if visible then
@@ -904,8 +949,8 @@ begin
   for I := 0 to Count - 1 do
   begin
     //if _notaskbar then Exit;
-
-    accent.AccentState := Items[I]._transstyle;
+    //Items[I]._transstyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
+    accent.AccentState := ACCENT_ENABLE_TRANSPARENTGRADIENT; //Items[I]._transstyle;
     accent.GradientColor := $00000000;
     accent.AccentFlags := 2; // 2: seems to hide the border
     data.Attribute := WCA_ACCENT_POLICY;
@@ -913,7 +958,6 @@ begin
     data.Data := @accent;
 
 //    if Items[I]._transstyle = ACCENT_ENABLE_TRANSPARENTGRADIENT then
-    Items[I]._transstyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
       SetWindowCompositionAttribute(Items[I].Handle, data);
   end;
 end;
@@ -935,6 +979,7 @@ var
   firstBtnLeft, firstBtnRight: Boolean;
   firstBtnTop, firstBtnBottom: Boolean;
   AMonitor: TMonitor;
+  ABData: TAppBarData;
 begin
   for n := 0 to Count - 1 do
   begin
@@ -969,6 +1014,20 @@ begin
     end;
 
   //  if _monitorId = _monitor then
+    if Items[n].MainTaskbar then
+    begin
+      if SHAppBarMessage(ABM_GETTASKBARPOS, ABData) <> 0 then
+      begin
+        Items[n]._rect := ABData.rc;
+        case ABData.uEdge of
+          ABE_LEFT: Items[n].Position := TTaskPos.Left;
+          ABE_TOP: Items[n].Position := TTaskPos.Top;
+          ABE_RIGHT: Items[n].Position := TTaskPos.Right;
+          ABE_BOTTOM: Items[n].Position := TTaskPos.Bottom;
+        end;
+      end;
+    end
+    else
     begin
       if (Items[n]._rect.Width > Items[n]._rect.Height)
       and (Items[n].MonitorRect.Top = Items[n]._rect.Top)
