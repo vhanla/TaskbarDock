@@ -11,7 +11,7 @@ uses
   UCL.IntAnimation, UCL.IntAnimation.Helpers ,UCL.TUScrollBox, Vcl.ComCtrls,
   UCL.TUHyperLink, Vcl.StdCtrls, UCL.TUText, UCL.TUCheckBox,
   System.Net.HttpClient, System.Types,
-  frmIcons, UCL.TUProgressBar, frmSkins;
+  frmIcons, UCL.TUProgressBar, frmSkins, GDIPAPI, GDIPOBJ;
 
 type
 
@@ -83,6 +83,8 @@ type
     USymbolButton7: TUSymbolButton;
     tbsSkins: TTabSheet;
     frmSkin1: TfrmSkin;
+    ListBox1: TListBox;
+    Button1: TButton;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -120,6 +122,8 @@ type
     procedure frameIcons1UButton5Click(Sender: TObject);
     procedure frameIcons1UButton2Click(Sender: TObject);
     procedure USymbolButton7Click(Sender: TObject);
+    procedure frameIcons1UButton1Click(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
     FClient: THTTPClient;
@@ -146,8 +150,6 @@ type
     function SystemUsesLightTheme: Boolean;
   public
     { Public declarations }
-    Taskbar: TTaskbar;
-    Taskbar2: TTaskbar;
     Taskbars: TTaskbars;
     function ForceForeground(hwnd: HWND): Boolean;
     procedure CheckUpdate;
@@ -173,15 +175,17 @@ var
   prevForegroundWindow: THandle;
   startmenuVisible: Boolean;
 
+  ShellHook: HHOOK;
+
 
 implementation
 
 {$R *.dfm}
 
-uses skinform;
+uses skinform, functions;
 
 
-{.$include iconchanger.inc}
+
 
 procedure TForm1.mnuAboutClick(Sender: TObject);
 begin
@@ -213,7 +217,7 @@ begin
   mnuCenter.Checked := not mnuCenter.Checked;
   tmrCenter.Enabled := mnuCenter.Checked;
 
-  Taskbar.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
+  Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
   SyncSettingsPage;
 end;
 
@@ -228,9 +232,6 @@ begin
   begin
     DwmIsCompositionEnabled(AeroEnabled);
   end;
-
-//  if AeroEnabled then
-//    Params.WindowClass.style := Params.WindowClass.style + CS_DROPSHADOW;
 
 end;
 
@@ -337,16 +338,13 @@ begin
   if CloseApp then
   begin
     tmrOptions.Enabled := False;
-    Taskbar2.StartBtnVisible();
-    Taskbar2.NotifyAreaVisible();
-    Taskbar.StartBtnVisible();
-    Taskbar.NotifyAreaVisible();
+    Taskbars.RestoreAllStarts();
+    Taskbars.NotifyAreaVisible();
 
     if not ThreadIsRunning then
     begin
       SaveINI;
-      Taskbar.CenterAppsButtons(False);
-      Taskbar2.CenterAppsButtons(False);
+      Taskbars.CenterAppsButtons(False);
       PostMessage(handle,WM_SYSCOMMAND,SC_TASKLIST,0);
       CanClose := True
     end
@@ -359,6 +357,15 @@ begin
   end;
 end;
 
+function ShellProc(nCode: Integer; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+begin
+  if nCode = HSHELL_WINDOWCREATED then
+  begin
+    ShowMessage('Window created');
+  end;
+  Result := CallNextHookEx(0, nCode, wParam, lParam);
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   Self.ThemeManager := ThemeManager;
@@ -368,6 +375,8 @@ begin
   LoadINI;
   FClient := THTTPClient.Create;
   FClient.OnReceiveData := ReceiveDataEvent;
+
+  ShellHook := SetWindowsHookEx(WH_SHELL, @ShellProc, 0, 0);
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -376,7 +385,7 @@ begin
   counter := GetTickCount64;
   while (GetTickCount64 - counter < 3000) do
   begin
-    if Taskbar.IsStartMenuVisible then
+    if Taskbars.IsStartMenuVisible then
     begin
       keybd_event(VK_LWIN, $9d, 0, 0);
       keybd_event(VK_LWIN, $9d, KEYEVENTF_KEYUP, 0);
@@ -387,8 +396,6 @@ begin
 
   FDownloadStream.Free;
   FClient.Free;
-  Taskbar2.Free;
-  Taskbar.Free;
   Taskbars.Free;
 end;
 
@@ -396,6 +403,12 @@ procedure TForm1.FormShow(Sender: TObject);
 begin
   ShowWindow(Application.Handle, SW_HIDE);
   SyncSettingsPage;
+end;
+
+procedure TForm1.frameIcons1UButton1Click(Sender: TObject);
+begin
+  frameIcons1.UButton1Click(Sender);
+
 end;
 
 procedure TForm1.frameIcons1UButton2Click(Sender: TObject);
@@ -453,14 +466,8 @@ begin
   tmrThreadWaiter.Interval := 10;
 
   Taskbars := TTaskbars.Create;
-
-  Taskbar := TTaskbar.Create;
-  Taskbar.UpdateTaskbarInfo;
-  Taskbar.TransStyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
-
-  Taskbar2 := TTaskbar.Create(2);
-  Taskbar2.UpdateTaskbarInfo;
-  Taskbar2.TransStyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
+  Taskbars.Refresh;
+  Taskbars.UpdateTaskbarInfo;
 
   AppIsRunning := True;
   ThreadIsRunning := True;
@@ -480,11 +487,10 @@ begin
           end;}
         if Form1.mnuTransparent.Checked then
         begin
-          Form1.Taskbar.Transparent;
           //SetWindowLong(Form1.Taskbar.Handle, GWL_EXSTYLE, GetWindowLong(Form1.Taskbar.Handle, GWL_EXSTYLE) and not WS_EX_LAYERED);
           //SetLayeredWindowAttributes(Form1.Taskbar.Handle, 0, 155, LWA_ALPHA);
           //UpdateLayeredWindow(Form1.Taskbar.Handle,0, )
-          Form1.Taskbar2.Transparent;
+          Form1.Taskbars.Transparent;
         end;
         Sleep(10);
       end
@@ -607,7 +613,7 @@ begin
     counter := GetTickCount64;
     while (GetTickCount64 - counter < 3000) do
     begin
-      if Taskbar.IsStartMenuVisible then
+      if Taskbars.IsStartMenuVisible then
       begin
         keybd_event(VK_LWIN, 0, 0, 0);
         keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
@@ -726,38 +732,41 @@ end;
 procedure TForm1.tmrCenterTimer(Sender: TObject);
 var
   fgwnd: THandle;
+  dc: HDC;
 begin
-  if Taskbar.IsStartMenuVisible then
+  if Taskbars.Count = 0 then Exit;
+
+  if Taskbars.IsStartMenuVisible then
     frmSkin1.UText3.Caption := 'Start Menu Visible'
   else
     frmSkin1.UText3.Caption := '';
   if tmrUpdateTBinfo.Enabled then
   begin
-    Taskbar2.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
-    Taskbar.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
+    Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
 
     if chkSkinEnabled.State = cbsChecked then
     begin
       if not IsWindowVisible(Form2.Handle) then
         Form2.Show;
 
-      if Taskbar.MSTaskRect.Left <> Taskbar.MSTaskListRect.Left then
-      begin
-        skinform.Form2.Width := Taskbar.AppsRight - Taskbar.AppsLeft; //Taskbar.MSTaskListRect.Width;
-        skinform.Form2.Height := Taskbar.MSTaskListRect.Height;
-        skinform.Form2.Top := Taskbar.Rect.Top;
-        skinform.Form2.Left := Taskbar.MSTaskListRect.Left;
-      end;
+      //if Taskbar.MSTaskRect.Left <> Taskbar.MSTaskListRect.Left then
+      //begin
+      //  skinform.Form2.Width := Taskbar.AppsRight - Taskbar.AppsLeft; //Taskbar.MSTaskListRect.Width;
+      //  skinform.Form2.Height := Taskbar.MSTaskListRect.Height;
+      //  skinform.Form2.Top := Taskbar.Rect.Top;
+      //  skinform.Form2.Left := Taskbar.MSTaskListRect.Left;
+      //end;
       fgwnd := GetForegroundWindow;
       if (fgwnd <> prevForegroundWindow) then
       begin
         prevForegroundWindow := fgwnd;
         startmenuVisible := False;
-        if fgwnd = Taskbar.Handle then
-        begin
-          ForceForeground(Form2.Handle);
-          ForceForeground(Taskbar.Handle);
-        end;
+        //if (fgwnd = Taskbar.Handle)
+        //then
+        //begin
+        //  ForceForeground(Form2.Handle);
+        //  ForceForeground(Taskbar.Handle);
+        //end;
       end;
       // let's show the skin when start menu open while
       // fullscreen on some windows
@@ -768,6 +777,51 @@ begin
         ForceForeground(Taskbar.Handle);
         PostMessage(Handle, WM_SYSCOMMAND, SC_TASKLIST, 0);
       end*)
+      //if Taskbar.IsStartMenuVisible then
+      //begin
+      //  SetWindowPos(Form2.Handle, HWND_TOP, 0, 0, 0, 0,
+      //    SWP_NOMOVE or
+      //    SWP_NOSENDCHANGING or
+      //    SWP_NOSIZE or
+      //    SWP_NOACTIVATE or
+      //    SWP_ASYNCWINDOWPOS
+      //  );
+      //  SetWindowPos(Taskbar.Handle, HWND_TOP, 0, 0, 0, 0,
+      //    SWP_NOMOVE or
+      //    SWP_NOSENDCHANGING or
+      //    SWP_NOSIZE or
+      //    SWP_NOACTIVATE or
+      //    SWP_ASYNCWINDOWPOS
+      //  );
+        {dc := GetDC(Taskbar.Handle);
+        try
+          if PtVisible(dc, Taskbar.Rect.Width div 2, Taskbar.Rect.Height div 2) then
+          begin
+            ForceForeground(Form2.Handle);
+            ForceForeground(Taskbar.Handle);
+          end;
+        finally
+          ReleaseDC(Taskbar.Handle, dc);
+        end;}
+      //end;
+
+      // hide skin on fullscreen windows
+      (*if IsFullScreenWindow(fgwnd)
+      then
+      begin
+        {SetWindowPos(Form2.Handle, HWND_BOTTOM, 0, 0, 0, 0,
+          SWP_NOMOVE or
+          SWP_NOSENDCHANGING or
+          SWP_NOSIZE or
+          SWP_NOACTIVATE or
+          SWP_ASYNCWINDOWPOS
+        );}
+
+        ShowWindow(Form2.Handle, SW_HIDE);
+      end
+      else
+        if not IsWindowVisible(Form2.Handle) then
+          ShowWindow(Form2.Handle, SW_SHOWNOACTIVATE);*)
     end
     else
     begin
@@ -782,6 +836,7 @@ var
   sm: THandle;
   smr: TRect;
   ms: TPoint;
+  I: Integer;
 begin
   try
     ms := Mouse.CursorPos;
@@ -790,55 +845,46 @@ begin
 
   if mnuStart.Checked then
   begin
-    Taskbar2.StartBtnVisible();
-    Taskbar.StartBtnVisible();
+    for I := 0 to Taskbars.Count - 1 do
+      ShowWindow(Taskbars.Items[I].StartButton.Handle, SW_SHOWNOACTIVATE);
   end
   else
   begin
-    Taskbar2.StartBtnVisible(False);
-    Taskbar.StartBtnVisible(False);
-    if (ms.X >= Taskbar.StartRect.Left)
-    and (ms.X <= Taskbar.StartRect.Right)
-    and (ms.Y >= Taskbar.StartRect.Top)
-    and (ms.Y <= Taskbar.StartRect.Bottom)
-    then
-      Taskbar.StartBtnVisible();
-    if (ms.X >= Taskbar2.StartRect.Left)
-    and (ms.X <= Taskbar2.StartRect.Right)
-    and (ms.Y >= Taskbar2.StartRect.Top)
-    and (ms.Y <= Taskbar2.StartRect.Bottom)
-    then
-      Taskbar2.StartBtnVisible();
+    for I := 0 to Taskbars.Count - 1 do
+      if (ms.X >= Taskbars.Items[I].StartRect.Left)
+      and (ms.X <= Taskbars.Items[I].StartRect.Right)
+      and (ms.Y >= Taskbars.Items[I].StartRect.Top)
+      and (ms.Y <= Taskbars.Items[I].StartRect.Bottom)
+      then
+        ShowWindow(Taskbars.Items[I].StartButton.Handle, SW_SHOWNOACTIVATE)
+      else
+        ShowWindow(Taskbars.Items[I].StartButton.Handle, SW_HIDE);
   end;
 
   if mnuTray.Checked then
   begin
-    Taskbar2.NotifyAreaVisible();
-    Taskbar.NotifyAreaVisible();
+    Taskbars.NotifyAreaVisible();
   end
   else
   begin
-    Taskbar2.NotifyAreaVisible(False);
-    Taskbar.NotifyAreaVisible(False);
-    if (ms.X >= Taskbar.TrayRect.Left)
-    and (ms.X <= Taskbar.TrayRect.Right)
-    and (ms.Y >= Taskbar.TrayRect.Top)
-    and (ms.Y <= Taskbar.TrayRect.Bottom)
-    then
-      Taskbar.NotifyAreaVisible();
-
-    if (ms.X >= Taskbar2.TrayRect.Left)
-    and (ms.X <= Taskbar2.TrayRect.Right)
-    and (ms.Y >= Taskbar2.TrayRect.Top)
-    and (ms.Y <= Taskbar2.TrayRect.Bottom)
-    then
-      Taskbar2.NotifyAreaVisible();
+    //Taskbars.NotifyAreaVisible(False);
+    for I := 0 to Taskbars.Count - 1 do
+      if (ms.X >= Taskbars.Items[I].TrayRect.Left)
+      and (ms.X <= Taskbars.Items[I].TrayRect.Right)
+      and (ms.Y >= Taskbars.Items[I].TrayRect.Top)
+      and (ms.Y <= Taskbars.Items[I].TrayRect.Bottom)
+      then
+        ShowWindow(Taskbars.Items[I].TrayWnd.Handle, SW_SHOWNOACTIVATE)
+      else
+        ShowWindow(Taskbars.Items[I].TrayWnd.Handle, SW_HIDE);
   end;
 
   if mnuFull.Checked then
   begin
-    Taskbar2.FullTaskBar;
-    Taskbar.FullTaskBar;
+    //Taskbar2.FullTaskBar;
+    //Taskbar.FullTaskBar;
+    //for I := 0 to Taskbars.Count - 1 do
+      //Taskbars.Items[0].FullTaskBar;
   end;
 
 end;
@@ -851,9 +897,7 @@ end;
 
 procedure TForm1.tmrUpdateTBinfoTimer(Sender: TObject);
 begin
-  Taskbar2.UpdateTaskbarHandle;
-  Taskbar2.UpdateTaskbarInfo;
-  Taskbar.UpdateTaskbarInfo;
+  Taskbars.UpdateTaskbarInfo;
 end;
 
 procedure TForm1.TrayIcon1DblClick(Sender: TObject);
@@ -888,6 +932,90 @@ procedure TForm1.btnCheckUpdateClick(Sender: TObject);
 begin
   btnCheckUpdate.Enabled := False;
   CheckUpdate;
+end;
+
+procedure PremultiplyBitmap(Bitmap: TBitmap);
+var
+  Row, Col: integer;
+  p: PRGBQuad;
+  PreMult: array[byte, byte] of byte;
+begin
+  // precalculate all possible values of a*b
+  for Row := 0 to 255 do
+    for Col := Row to 255 do
+    begin
+      PreMult[Row, Col] := Row*Col div 255;
+      if (Row <> Col) then
+        PreMult[Col, Row] := PreMult[Row, Col]; // a*b = b*a
+    end;
+
+  for Row := 0 to Bitmap.Height-1 do
+  begin
+    Col := Bitmap.Width;
+    p := Bitmap.ScanLine[Row];
+    while (Col > 0) do
+    begin
+      p.rgbBlue := PreMult[p.rgbReserved, p.rgbBlue];
+      p.rgbGreen := PreMult[p.rgbReserved, p.rgbGreen];
+      p.rgbRed := PreMult[p.rgbReserved, p.rgbRed];
+      inc(p);
+      dec(Col);
+    end;
+  end;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  BlendFunc: TBlendFunction;
+  BmpPos, BmpOffest: TPoint;
+  BmpSize: TSize;
+  Bitmap: TBitmap;
+  PNGBitmap: TGPBitmap;
+  BitmapHandle: HBITMAP;
+begin
+  (*ListBox1.Items := Taskbar.ListMainTaskbarElements;
+
+  SetWindowLong( Taskbar.MSTaskListWClass.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbar.MSTaskListWClass.Handle, GWL_EXSTYLE) and not WS_EX_LAYERED );
+  SetLayeredWindowAttributes(Taskbar.MSTaskListWClass.Handle, 0, 155, LWA_ALPHA);
+
+  SetWindowLong( Taskbar.StartButton.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbar.StartButton.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
+  SetLayeredWindowAttributes(Taskbar.StartButton.Handle, 0, 180, LWA_ALPHA);
+
+  SetWindowLong( Taskbar.TrayWnd.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbar.TrayWnd.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
+  SetLayeredWindowAttributes(Taskbar.TrayWnd.Handle, 0, 180, LWA_ALPHA);
+
+  BmpPos := Point(0,
+                  0);
+  BmpOffest := Point(Taskbar.MSTaskListWClass.Rect.Left,
+                    Taskbar.Rect.Top);
+
+
+  BlendFunc.BlendOp := AC_SRC_OVER;
+  BlendFunc.BlendFlags := 0;
+  BlendFunc.SourceConstantAlpha := 255;
+  BlendFunc.AlphaFormat := 0;
+
+
+  Bitmap := TBitmap.Create;
+
+  PNGBitmap := TGPBitmap.Create('L:\Proyectos\TaskbarDock\Win32\Debug\skins\Sierra\bigdemo.png');
+  PNGBitmap.GetHBITMAP(MakeColor(0,0,0,0), BitmapHandle);
+  Bitmap.Handle := BitmapHandle;
+
+  PremultiplyBitmap(Bitmap);
+
+  BmpSize.cx := Bitmap.Width;
+  BmpSize.cy := Bitmap.Height;
+
+
+  SetWindowLong( Taskbar.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbar.Handle, GWL_EXSTYLE) and not WS_EX_LAYERED );
+  UpdateLayeredWindow(Taskbar.Handle,
+    0, nil, @BmpSize, Bitmap.Canvas.Handle,@BmpPos, 0, @BlendFunc, ULW_ALPHA);
+  *)
 end;
 
 procedure TForm1.CheckUpdate;
@@ -1003,10 +1131,7 @@ var
 begin
   if Msg.Msg = fwm_TaskbarRestart then
   begin
-    Taskbar2.UpdateTaskbarHandle;
-    Taskbar.UpdateTaskbarHandle;
-    Taskbar2.UpdateTaskbarInfo;
-    Taskbar.UpdateTaskbarInfo;
+    Taskbars.UpdateTaskbarInfo;
   end
   else
   begin
