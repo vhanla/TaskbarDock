@@ -126,6 +126,7 @@ type
     procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
+    ms: TPoint;
     FClient: THTTPClient;
     FGlobalStart: Cardinal;
     FAsyncResult: IAsyncResult;
@@ -158,6 +159,7 @@ type
   protected
     procedure WndProc(var Msg: TMessage); override;
     procedure CreateParams(var Params: TCreateParams); override;
+    //procedure WMCopyData(var Msg: TMessage); message WM_COPYDATA;
   end;
 
   //Requires setversion.cmd to be run prior to build for release
@@ -177,6 +179,8 @@ var
 
   ShellHook: HHOOK;
 
+//  procedure RunHook; cdecl; external 'TaskbarDll.dll' name 'RunHook';
+//  procedure KillHook; cdecl; external 'TaskbarDll.dll' name 'KillHook';
 
 implementation
 
@@ -233,6 +237,7 @@ begin
     DwmIsCompositionEnabled(AeroEnabled);
   end;
 
+  Params.WinClassName := 'TaskbarDocks';
 end;
 
 procedure TForm1.DoEndDownload(const AsyncResult: IAsyncResult);
@@ -377,11 +382,13 @@ begin
   FClient.OnReceiveData := ReceiveDataEvent;
 
   ShellHook := SetWindowsHookEx(WH_SHELL, @ShellProc, 0, 0);
+//  RunHook;
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 var counter: UINT64;
 begin
+//  KillHook;
   counter := GetTickCount64;
   while (GetTickCount64 - counter < 3000) do
   begin
@@ -835,7 +842,6 @@ procedure TForm1.tmrOptionsTimer(Sender: TObject);
 var
   sm: THandle;
   smr: TRect;
-  ms: TPoint;
   I: Integer;
 begin
   try
@@ -973,24 +979,24 @@ var
   PNGBitmap: TGPBitmap;
   BitmapHandle: HBITMAP;
 begin
-  (*ListBox1.Items := Taskbar.ListMainTaskbarElements;
+//  ListBox1.Items := Taskbars.ListMainTaskbarElements;
 
-  SetWindowLong( Taskbar.MSTaskListWClass.Handle,GWL_EXSTYLE ,
-  getwindowlong( Taskbar.MSTaskListWClass.Handle, GWL_EXSTYLE) and not WS_EX_LAYERED );
-  SetLayeredWindowAttributes(Taskbar.MSTaskListWClass.Handle, 0, 155, LWA_ALPHA);
+  SetWindowLong( Taskbars.MainTaskbar.MSTaskListWClass.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbars.MainTaskbar.MSTaskListWClass.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
+  SetLayeredWindowAttributes(Taskbars.MainTaskbar.MSTaskListWClass.Handle, 0, 195, LWA_ALPHA);
 
-  SetWindowLong( Taskbar.StartButton.Handle,GWL_EXSTYLE ,
-  getwindowlong( Taskbar.StartButton.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
-  SetLayeredWindowAttributes(Taskbar.StartButton.Handle, 0, 180, LWA_ALPHA);
+  SetWindowLong( Taskbars.MainTaskbar.StartButton.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbars.MainTaskbar.StartButton.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
+  SetLayeredWindowAttributes(Taskbars.MainTaskbar.StartButton.Handle, 0, 180, LWA_ALPHA);
 
-  SetWindowLong( Taskbar.TrayWnd.Handle,GWL_EXSTYLE ,
-  getwindowlong( Taskbar.TrayWnd.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
-  SetLayeredWindowAttributes(Taskbar.TrayWnd.Handle, 0, 180, LWA_ALPHA);
+  SetWindowLong( Taskbars.MainTaskbar.TrayWnd.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbars.MainTaskbar.TrayWnd.Handle, GWL_EXSTYLE) or WS_EX_LAYERED );
+  SetLayeredWindowAttributes(Taskbars.MainTaskbar.TrayWnd.Handle, 0, 180, LWA_ALPHA);
 
   BmpPos := Point(0,
                   0);
-  BmpOffest := Point(Taskbar.MSTaskListWClass.Rect.Left,
-                    Taskbar.Rect.Top);
+  BmpOffest := Point(Taskbars.MainTaskbar.MSTaskListWClass.Rect.Left,
+                    Taskbars.MainTaskbar.Rect.Top);
 
 
   BlendFunc.BlendOp := AC_SRC_OVER;
@@ -1000,6 +1006,7 @@ begin
 
 
   Bitmap := TBitmap.Create;
+  try
 
   PNGBitmap := TGPBitmap.Create('L:\Proyectos\TaskbarDock\Win32\Debug\skins\Sierra\bigdemo.png');
   PNGBitmap.GetHBITMAP(MakeColor(0,0,0,0), BitmapHandle);
@@ -1011,11 +1018,15 @@ begin
   BmpSize.cy := Bitmap.Height;
 
 
-  SetWindowLong( Taskbar.Handle,GWL_EXSTYLE ,
-  getwindowlong( Taskbar.Handle, GWL_EXSTYLE) and not WS_EX_LAYERED );
-  UpdateLayeredWindow(Taskbar.Handle,
+  SetWindowLong( Taskbars.MainTaskbar.Handle,GWL_EXSTYLE ,
+  getwindowlong( Taskbars.MainTaskbar.Handle, GWL_EXSTYLE) and not WS_EX_LAYERED );
+  UpdateLayeredWindow(Taskbars.MainTaskbar.Handle,
     0, nil, @BmpSize, Bitmap.Canvas.Handle,@BmpPos, 0, @BlendFunc, ULW_ALPHA);
-  *)
+  finally
+    Bitmap.Free;
+
+  end;
+
 end;
 
 procedure TForm1.CheckUpdate;
@@ -1123,6 +1134,37 @@ procedure TForm1.USymbolButton7Click(Sender: TObject);
 begin
   PageControl1.ActivePageIndex := 5;
 end;
+
+(*procedure TForm1.WMCopyData(var Msg: TMessage);
+var
+  FMsg: PCopyDataStruct;
+  Data: PMouseHookStruct;
+begin
+  Msg.Result := 0;
+  FMsg := PCopyDataStruct(Msg.LParam);
+  if FMsg = nil then
+    Exit;
+
+  Data := PMouseHookStruct(FMsg.lpData);
+//  Str := String(UTF8String(PAnsiChar(FMsg^.lpData)));
+//  MsgID := FMsg^.dwData;
+//  case MsgID of
+//    WM_MOUSE_COORDS:
+//    begin
+//
+//    end;
+//  end;
+
+  UCaptionBar1.Caption := IntToStr(Data^.pt.X);
+//  ms := Data^.pt;
+  Inc(Data^.pt.X);
+  Inc(Data^.pt.Y);
+  //HotSpotAction(Data^.pt);
+
+  Msg.Result := 1;
+
+//  tmrOptionsTimer(Self);
+end;*)
 
 procedure TForm1.WndProc(var Msg: TMessage);
 var

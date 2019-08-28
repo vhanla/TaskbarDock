@@ -1,3 +1,10 @@
+{
+  DLL system hooking for mouse's position, taskbar drawing, etc.
+
+  Currently it hooks mouse position in order no to use delphi's method
+  which is not really appropriate, but it has disadvantages on privileged
+  levels windows on focus, it won't work.
+}
 library TaskbarDll;
 
 { Important note about DLL memory management: ShareMem must be the
@@ -11,20 +18,18 @@ library TaskbarDll;
   using PChar or ShortString parameters. }
 
 uses
-  madExcept,
-  madLinkDisAsm,
-  madListHardware,
-  madListProcesses,
-  madListModules,
   System.SysUtils,
   System.Classes,
   Variants,
   Winapi.Windows,
   DWMAPI,
+  Messages,
   DDetours;
 
 {$R *.res}
 const
+  MemMapFile ='TaskbarDocks';
+
   WCA_ACCENT_POLICY = 19;
   ACCENT_ENABLE_GRADIENT = 1;
   ACCENT_ENABLE_TRANSPARENTGRADIENT = 2;
@@ -46,7 +51,15 @@ type
     SizeOfData: Integer;
   end;
 
+  PDLLGlobal = ^TDLLGlobal;
+  TDLLGlobal = packed record
+    HookHandle: HHOOK;
+  end;
+
 var
+  GlobalData: PDLLGlobal;
+  MMF: THandle;
+
   TrampolineMessageBoxW: function(hWnd: HWND; lpText, lpCaption: LPCWSTR; uType: UINT): Integer;
   stdcall = nil;
   TrampolineSetWindowCompositionAttribute: function (hWnd: HWND; var data: WindowCompositionAttributeData): Integer;
@@ -127,8 +140,94 @@ begin
   end;
 end;
 
+function MouseProc(Code: Integer; wParam: WPARAM; lParam: LPARAM): HRESULT; stdcall;
+var
+  TargetWnd: THandle;
+  Msg: PCopyDataStruct;
+begin
+  if (Code < 0) or (Code = HC_NOREMOVE) then
+  begin
+    Result := CallNextHookEx(GlobalData^.HookHandle, Code, wParam, lParam);
+    Exit;
+  end;
+
+  if (wParam = WM_MOUSEMOVE) then
+  begin
+    TargetWnd := FindWindow('TaskbarDocks', nil);
+    if TargetWnd <> 0 then
+    begin
+      New(Msg);
+
+      Msg^.dwData := 0;
+      Msg^.cbData := SizeOf(TMouseHookStruct) + 1;
+      Msg^.lpData := PMouseHookStruct(lParam);
+      SendMessageTimeout(TargetWnd, WM_COPYDATA, 0, Integer(Msg), SMTO_ABORTIFHUNG, 50, nil);
+
+      Dispose(Msg);
+    end;
+  end;
+
+  Result := CallNextHookEx(GlobalData^.HookHandle, Code, wParam, lParam);
+end;
+
+procedure CreateGlobalHeap;
+begin
+  MMF := CreateFileMapping(INVALID_HANDLE_VALUE, nil, PAGE_READWRITE, 0, SizeOf(TDLLGlobal), MemMapFile);
+
+  if MMF = 0 then
+  begin
+    MessageBox(0, 'CreateFileMapping failed', '', 0);
+    Exit;
+  end;
+
+  GlobalData := MapViewOfFile(MMF, FILE_MAP_ALL_ACCESS, 0, 0, SizeOf(TDLLGlobal));
+  if GlobalData = nil then
+  begin
+    CloseHandle(MMF);
+    MessageBox(0, 'MapViewFile failed', '', 0);
+  end;
+end;
+
+procedure DeleteGlobalHeap;
+begin
+  if GlobalData <> nil then
+    UnmapViewOfFile(GlobalData);
+
+  if MMF <> INVALID_HANDLE_VALUE then
+    CloseHandle(MMF);
+end;
+
+procedure RunHook; stdcall;
+begin
+OutputDebugString('empezamos');
+  GlobalData^.HookHandle := SetWindowsHookEx(WH_MOUSE_LL, @MouseProc, HInstance, 0);
+  if GlobalData^.HookHandle = INVALID_HANDLE_VALUE then
+  begin
+    MessageBox(0, 'Error', '', MB_OK);
+    Exit;
+  end;
+end;
+
+procedure KillHook; stdcall;
+begin
+  if (GlobalData <> nil) and (GlobalData^.HookHandle <> INVALID_HANDLE_VALUE) then
+    UnhookWindowsHookEx(GlobalData^.HookHandle);
+end;
+
+procedure DLLEntry(dwReason: DWORD);
+begin
+  case dwReason of
+    DLL_PROCESS_ATTACH: CreateGlobalHeap;
+    DLL_PROCESS_DETACH: DeleteGlobalHeap;
+  end;
+end;
+
+exports
+  KillHook,
+  RunHook;
+
 begin
   OutputDebugString('empezamos');
-  DllProc := mydllproc;
-  mydllproc(DLL_PROCESS_ATTACH);
+  DllProc := @DllEntry; //mydllproc;
+  DllEntry(DLL_PROCESS_ATTACH); //mydllproc(DLL_PROCESS_ATTACH);
 end.
