@@ -18,7 +18,7 @@ interface
 
 uses
 Windows, Classes, TlHelp32, PsAPI, SysUtils, Registry, Graphics, DWMApi, PNGImage{,
-UXTHeme, Themes} {uxtheme and themes for rendering text on glass }, OleAcc, Variants;
+UXTHeme, Themes} {uxtheme and themes for rendering text on glass }, OleAcc, Variants, Forms;
 
 type
   AccentPolicy = packed record
@@ -51,6 +51,7 @@ function CreateSolidBrushWithAlpha(Color: TColor; Alpha: Byte = $FF): HBRUSH;
 function TaskbarTaskViewBtnClick: Boolean;
 {procedure DrawGlassText(Canvas: TCanvas; GlowSize: Integer; var Rect: TRect;
   var Text: UnicodeString; Format: DWORD); overload;}
+function IsFullScreenWindow(Wnd: HWND): Boolean;
 
   procedure SwitchToThisWindow(h1: hWnd; x: bool); stdcall;
   external user32 Name 'SwitchToThisWindow';
@@ -524,5 +525,23 @@ begin
     DrawThemeTextEx(ThemeServices.Theme[teEdit], Canvas.Handle, Part, State,
       PWideChar(Text), Length(Text), Format, @Rect, DTTOpts);
 end;}
+
+function IsFullScreenWindow(Wnd: HWND): Boolean;
+var
+  plc: WINDOWPLACEMENT;
+  rc: TRECT;
+  mon: TMonitor;
+begin
+  Result := False;
+  GetWindowPlacement(wnd, plc);
+  if (plc.showCmd and SW_SHOWMAXIMIZED) = SW_SHOWMAXIMIZED then
+  begin
+    GetWindowRect(wnd, rc);
+    mon := Screen.MonitorFromWindow(wnd);
+    if mon.BoundsRect = rc then
+      Result := True;
+  end;
+end;
+
 end.
 
