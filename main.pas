@@ -849,7 +849,7 @@ begin
   except
   end;
 
-  if mnuStart.Checked then
+  if mnuStart.Checked or Taskbars.IsStartMenuVisible then
   begin
     for I := 0 to Taskbars.Count - 1 do
       ShowWindow(Taskbars.Items[I].StartButton.Handle, SW_SHOWNOACTIVATE);
