@@ -17,7 +17,9 @@ unit functions;
 interface
 
 uses
-Windows, Classes, TlHelp32, PsAPI, SysUtils, Registry, Graphics, DWMApi, PNGImage{,
+Windows, Classes, TlHelp32, PsAPI, SysUtils, Registry, Graphics, DWMApi,
+ActiveX, ComObj, ShlObj,
+PNGImage{,
 UXTHeme, Themes} {uxtheme and themes for rendering text on glass }, OleAcc, Variants, Forms;
 
 type
@@ -32,6 +34,16 @@ type
     attribute: THandle;
     pData: Pointer;
     dataSize: ULONG;
+  end;
+  TShellLinkInfo = record
+    PathName: String;
+    Arguments: String;
+    Description: String;
+    WorkingDirectory: String;
+    IconLocation: String;
+    IconIndex: Integer;
+    ShowCmd: Integer;
+    HotKey: Word;
   end;
 
 function ProcessIsElevated(Process: Cardinal): Boolean;
@@ -52,6 +64,9 @@ function TaskbarTaskViewBtnClick: Boolean;
 {procedure DrawGlassText(Canvas: TCanvas; GlowSize: Integer; var Rect: TRect;
   var Text: UnicodeString; Format: DWORD); overload;}
 function IsFullScreenWindow(Wnd: HWND): Boolean;
+// from http://www.informit.com/articles/article.aspx?p=26940&seqNum=4
+procedure GetShellLinkInfo(const LinkFile: WideString; var LnkInfo: TShellLinkInfo);
+procedure SetShellLinkInfo(const LinkFile: WideString; const LnkInfo: TShellLinkInfo);
 
   procedure SwitchToThisWindow(h1: hWnd; x: bool); stdcall;
   external user32 Name 'SwitchToThisWindow';
@@ -541,6 +556,58 @@ begin
     if mon.BoundsRect = rc then
       Result := True;
   end;
+end;
+
+procedure GetShellLinkInfo(const LinkFile: WideString; var LnkInfo: TShellLinkInfo);
+var
+  SL: IShellLink;
+  PF: IPersistFile;
+  FindData: TWin32FindData;
+  AStr: array[0..MAX_PATH] of char;
+begin
+  OleCheck(CoCreateInstance(CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, IShellLink, SL));
+  PF := SL as IPersistFile;
+  OleCheck(PF.Load(PWideChar(LinkFile), STGM_READ));
+  OleCheck(SL.Resolve(0, SLR_ANY_MATCH or SLR_NO_UI));
+
+  with LnkInfo do
+  begin
+    OleCheck(SL.GetPath(AStr, MAX_PATH, FindData, SLGP_SHORTPATH));
+    PathName := AStr;
+    OleCheck(SL.GetArguments(AStr, MAX_PATH));
+    Arguments := AStr;
+    //OleCheck(SL.GetDescription(AStr, MAX_PATH));
+    //Description := AStr;
+    OleCheck(SL.GetWorkingDirectory(AStr, MAX_PATH));
+    WorkingDirectory := AStr;
+    OleCheck(SL.GetIconLocation(AStr, MAX_PATH, IconIndex));
+    IconLocation := AStr;
+    OleCheck(SL.GetShowCmd(ShowCmd));
+    OleCheck(SL.GetHotkey(HotKey));
+  end;
+end;
+
+procedure SetShellLinkInfo(const LinkFile: WideString; const LnkInfo: TShellLinkInfo);
+var
+  SL: IShellLink;
+  PF: IPersistFile;
+begin
+  OleCheck(CoCreateInstance(CLSID_ShellLink, nil, CLSCTX_INPROC_SERVER, IShellLink, SL));
+  PF := SL as IPersistFile;
+
+  OleCheck(PF.Load(PChar(LinkFile), STGM_SHARE_DENY_WRITE));
+  OleCheck(SL.Resolve(0, SLR_ANY_MATCH or SLR_UPDATE or SLR_NO_UI));
+  with LnkInfo, SL do
+  begin
+    OleCheck(SetPath(PChar(PathName)));
+    OleCheck(SetArguments(PChar(Arguments)));
+    //OleCheck(SetDescription(PChar(Description)));
+    OleCheck(SetWorkingDirectory(PChar(WorkingDirectory)));
+    OleCheck(SetIconLocation(PChar(IconLocation), IconIndex));
+    OleCheck(SetShowCmd(ShowCmd));
+    OleCheck(SetHotkey(HotKey));
+  end;
+  PF.Save(PChar(LinkFile), True);
 end;
 
 end.
