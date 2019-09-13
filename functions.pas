@@ -2,6 +2,8 @@
 Functions that we will be using
 
 Changelog:
+19-09-13
+- Detect Windows 10 versions
 19-06-06
 - Support for light mode Windows 10 May 2019 Update
 18-09-03
@@ -22,6 +24,17 @@ ActiveX, ComObj, ShlObj,
 PNGImage{,
 UXTHeme, Themes} {uxtheme and themes for rendering text on glass }, OleAcc, Variants, Forms;
 
+const
+  BUILD_THRESHOLD1 = 10240; // N/A
+  BUILD_THRESHOLD2 = 10586; // November Update
+  BUILD_REDSTONE1 = 14393; // Anniversary Update
+  BUILD_REDSTONE2 = 15063; // Creators Update
+  BUILD_REDSTONE3 = 16299; // Fall Creators Update
+  BUILD_REDSTONE4 = 17134; // April 2018 Update
+  BUILD_REDSTONE5 = 17763; // October 2018 Update
+  BUILD_19H1 = 18362; // May 2019 Update
+  BUILD_19H2 = 18363;
+  BUILD_20H1 = 18980;
 type
   AccentPolicy = packed record
     AccentState: Integer;
@@ -48,7 +61,7 @@ type
 
 function ProcessIsElevated(Process: Cardinal): Boolean;
 function GetProcessNameFromWnd(Wnd: HWND): string;
-function isWindows10: boolean;
+function isWindows10(var version: Integer): boolean;
 function isAcrylicSupported:boolean;
 function SystemUsesLightTheme:boolean;
 procedure EnableBlur(Wnd: HWND; Enable: Boolean = True);
@@ -194,7 +207,7 @@ begin
 end;
 
 (* IsWindows10 function supports official RTM and above only *)
-function isWindows10:boolean;
+function isWindows10(var version: Integer):boolean;
 var
   Reg: TRegistry;
 begin
@@ -206,9 +219,14 @@ begin
     if Reg.OpenKeyReadOnly('SOFTWARE\Microsoft\Windows NT\CurrentVersion') then
     begin
       if Reg.ValueExists('CurrentVersion') then
+      begin
+        version := StrToInt(Reg.ReadString('CurrentBuildNumber'));
         if (Reg.ReadString('CurrentVersion') = '6.3')
-        and (StrToInt (Reg.ReadString('CurrentBuildNumber')) >= 10240) then
+        and (version >= 10240) then
+        begin
           Result := True;
+        end;
+      end;
     end;
   finally
     Reg.Free;
