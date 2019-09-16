@@ -149,6 +149,9 @@ type
 
     // System functions
     function SystemUsesLightTheme: Boolean;
+
+
+
   public
     { Public declarations }
     Taskbars: TTaskbars;
@@ -224,6 +227,7 @@ begin
   Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
   SyncSettingsPage;
 end;
+
 
 procedure TForm1.CreateParams(var Params: TCreateParams);
 var
@@ -375,6 +379,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   Self.ThemeManager := ThemeManager;
   AutoStartState;
+
   Init;
   tmrUpdateTBinfo.Enabled := True;
   LoadINI;
@@ -1173,7 +1178,7 @@ var
 begin
   if Msg.Msg = fwm_TaskbarRestart then
   begin
-    Taskbars.UpdateTaskbarInfo;
+    Taskbars.Refresh;
   end
   else
   begin
