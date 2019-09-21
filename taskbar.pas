@@ -496,6 +496,8 @@ procedure TTaskbars.NotifyAreaVisible(visible: Boolean);
 var
   I: Integer;
 begin
+  if FUpdating then Exit;
+
   for I := 0 to Count - 1 do
   if visible then
     ShowWindow(Items[I]._trayNotifyWnd.Handle, SW_SHOWNOACTIVATE)
@@ -603,6 +605,8 @@ procedure TTaskbars.RestoreAllStarts;
 var
   I: Integer;
 begin
+  if FUpdating then Exit;
+
   for I := 0 to Count - 1 do
     ShowWindow(Items[I]._start.Handle, SW_SHOWNOACTIVATE);
 end;
@@ -652,6 +656,8 @@ var
   accent: AccentPolicy;
   data: WindowCompositionAttributeData;
 begin
+  if FUpdating then Exit;
+
   for I := 0 to Count - 1 do
   begin
     //if _notaskbar then Exit;
@@ -687,6 +693,8 @@ var
   AMonitor: TMonitor;
   ABData: TAppBarData;
 begin
+  if FUpdating then Exit;
+
   for n := 0 to Count - 1 do
   begin
   //  if _notaskbar then Exit;
