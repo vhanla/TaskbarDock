@@ -10,7 +10,10 @@ TaskbarDock offers a few extra features to customize your Windows 10 taskbar.
 - [ ] Skin Taskbar
 
 ## FEATURES:
-- Multimonitor support (at least with two taskbars)
+- Center icons relative to its area or to the screen
+- Transparency for taskbar (incompatible with other tools) #warning
+- Multimonitor support
+- Toggle taskbar icons small/big
 - Autorun
 - Remember settings
 
