@@ -39,13 +39,16 @@ object Form1: TForm1
       Top = 0
       Width = 706
       Height = 371
-      ActivePage = tbsSkins
+      ActivePage = tbsSettings
       Align = alClient
       Style = tsFlatButtons
       TabOrder = 0
       object tbsSettings: TTabSheet
         Caption = 'tbsSettings'
         TabVisible = False
+        DesignSize = (
+          698
+          361)
         object UText1: TUText
           AlignWithMargins = True
           Left = 0
@@ -206,8 +209,8 @@ object Form1: TForm1
           OnClick = chkAutoStartClick
         end
         object chkSkinEnabled: TUCheckBox
-          Left = 216
-          Top = 64
+          Left = 184
+          Top = 56
           Width = 142
           Height = 30
           Hint = 'Shows a background skin f'
@@ -229,11 +232,33 @@ object Form1: TForm1
           ParentShowHint = False
           ShowHint = True
         end
+        object ListBox1: TListBox
+          Left = 328
+          Top = 56
+          Width = 353
+          Height = 194
+          Anchors = [akLeft, akTop, akRight]
+          ItemHeight = 13
+          TabOrder = 7
+        end
+        object Button1: TButton
+          Left = 328
+          Top = 256
+          Width = 353
+          Height = 25
+          Caption = 'List Taskbar Elements'
+          TabOrder = 8
+          OnClick = Button1Click
+        end
       end
       object tbsAbout: TTabSheet
         Caption = 'tbsAbout'
         ImageIndex = 1
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object headingAbout: TUText
           AlignWithMargins = True
           Left = 0
@@ -397,11 +422,15 @@ object Form1: TForm1
         Caption = 'tbsDocks'
         ImageIndex = 2
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object UText2: TUText
           AlignWithMargins = True
           Left = 0
           Top = 20
-          Width = 698
+          Width = 53
           Height = 28
           Margins.Left = 0
           Margins.Top = 20
@@ -416,7 +445,6 @@ object Form1: TForm1
           Font.Style = []
           ParentFont = False
           TextKind = tkHeading
-          ExplicitWidth = 53
         end
       end
       object tbsPinnedIcons: TTabSheet
@@ -436,10 +464,14 @@ object Form1: TForm1
             Width = 698
           end
           inherited UButton5: TUButton
+            Anchors = [akTop]
             OnClick = frameIcons1UButton5Click
           end
           inherited UButton2: TUButton
             OnClick = frameIcons1UButton2Click
+          end
+          inherited UButton3: TUButton
+            Anchors = [akLeft, akTop, akBottom]
           end
         end
       end
@@ -447,13 +479,15 @@ object Form1: TForm1
         Caption = 'tbsMore'
         ImageIndex = 4
         TabVisible = False
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
       end
       object tbsSkins: TTabSheet
         Caption = 'tbsSkins'
         ImageIndex = 5
         TabVisible = False
-        ExplicitTop = 27
-        ExplicitHeight = 340
         inline frmSkin1: TfrmSkin
           Left = 0
           Top = 0
@@ -461,8 +495,7 @@ object Form1: TForm1
           Height = 240
           Align = alTop
           TabOrder = 0
-          ExplicitLeft = 88
-          ExplicitTop = 80
+          ExplicitWidth = 698
           inherited UText3: TUText
             Width = 698
           end
@@ -797,8 +830,6 @@ object Form1: TForm1
       Align = alTop
       TabOrder = 5
       TabStop = True
-      ExplicitLeft = -2
-      ExplicitTop = 192
     end
     object USymbolButton7: TUSymbolButton
       Left = 0
@@ -828,9 +859,6 @@ object Form1: TForm1
       TabOrder = 6
       TabStop = True
       OnClick = USymbolButton7Click
-      ExplicitLeft = 16
-      ExplicitTop = 168
-      ExplicitWidth = 250
     end
   end
   object TrayIcon1: TTrayIcon
@@ -841,6 +869,7 @@ object Form1: TForm1
     Top = 344
   end
   object PopupMenu1: TPopupMenu
+    OnPopup = PopupMenu1Popup
     Left = 280
     Top = 240
     object mnuStart: TMenuItem
@@ -869,6 +898,10 @@ object Form1: TForm1
     object mnuCenter: TMenuItem
       Caption = '&Center'
       OnClick = mnuCenterClick
+    end
+    object SmallIcons1: TMenuItem
+      Caption = 'Small Icons'
+      OnClick = SmallIcons1Click
     end
     object N2: TMenuItem
       Caption = '-'
@@ -904,6 +937,7 @@ object Form1: TForm1
     Top = 344
   end
   object tmrOptions: TTimer
+    Interval = 250
     OnTimer = tmrOptionsTimer
     Left = 96
     Top = 344

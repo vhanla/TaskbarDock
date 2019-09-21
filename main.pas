@@ -85,6 +85,7 @@ type
     frmSkin1: TfrmSkin;
     ListBox1: TListBox;
     Button1: TButton;
+    SmallIcons1: TMenuItem;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -124,6 +125,8 @@ type
     procedure USymbolButton7Click(Sender: TObject);
     procedure frameIcons1UButton1Click(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure SmallIcons1Click(Sender: TObject);
+    procedure PopupMenu1Popup(Sender: TObject);
   private
     { Private declarations }
     ms: TPoint;
@@ -149,7 +152,6 @@ type
 
     // System functions
     function SystemUsesLightTheme: Boolean;
-
 
 
   public
@@ -189,7 +191,7 @@ implementation
 
 {$R *.dfm}
 
-uses skinform, functions;
+uses skinform, functions, settings;
 
 
 
@@ -227,6 +229,7 @@ begin
   Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
   SyncSettingsPage;
 end;
+
 
 
 procedure TForm1.CreateParams(var Params: TCreateParams);
@@ -379,7 +382,8 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   Self.ThemeManager := ThemeManager;
   AutoStartState;
-
+  //CreateDB;
+  ResetDB;
   Init;
   tmrUpdateTBinfo.Enabled := True;
   LoadINI;
@@ -645,6 +649,11 @@ begin
   SyncSettingsPage;
 end;
 
+procedure TForm1.PopupMenu1Popup(Sender: TObject);
+begin
+  SmallIcons1.Checked := Taskbars.SmallIcons;
+end;
+
 procedure TForm1.ReceiveDataEvent(const Sender: TObject; AContentLength,
   AReadCount: Int64; var Abort: Boolean);
 var
@@ -683,6 +692,13 @@ begin
   finally
     reg.Free;
   end;
+end;
+
+procedure TForm1.SmallIcons1Click(Sender: TObject);
+begin
+  Taskbars.SmallIcons := not SmallIcons1.Checked;
+  SmallIcons1.Checked := Taskbars.SmallIcons;
+  Taskbars.Refresh;
 end;
 
 procedure TForm1.SyncSettingsPage;
