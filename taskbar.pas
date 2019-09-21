@@ -305,7 +305,7 @@ var
   aLeft, aTop: Integer;
 begin
   if FUpdating then Exit;
-  
+
   for I := 0 to Count - 1 do
   begin
     if Items[I]._start.Handle = 0 then Exit; // make sure taskbar exists
@@ -429,6 +429,7 @@ var
 begin
   Result := nil;
   found := False;
+  if FUpdating then Exit;
   I := 0;
   while (I < Count) or not found do
   begin
@@ -644,6 +645,8 @@ end;
 
 procedure TTaskbars.StartBtnVisible(Index:Integer; Visible: Boolean);
 begin
+  if FUpdating then Exit;
+
   if visible then
     ShowWindow(Items[Index]._start.Handle, SW_SHOWNOACTIVATE)
   else
