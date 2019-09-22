@@ -195,6 +195,7 @@ type
     procedure EndUpdate;
 
     function IsStartMenuVisible: Boolean;
+    procedure PinTaskbar(lnkFile: PChar; pin: Boolean = True; defaultSize: DWORD = 0);
     procedure RestoreAllStarts;
     destructor Destroy; override;
   end;
@@ -504,6 +505,79 @@ begin
     ShowWindow(Items[I]._trayNotifyWnd.Handle, SW_SHOWNOACTIVATE)
   else
     ShowWindow(Items[I]._trayNotifyWnd.Handle, SW_HIDE);
+end;
+
+procedure TTaskbars.PinTaskbar(lnkFile: PChar; pin: Boolean = True;
+  defaultSize: DWORD);
+var
+  pPEB:       Pointer;
+  dwOrigLen, dwLen: DWORD;
+  pLdrModule: Pointer;
+  Windir: String;
+  szBuff: PChar;
+  mHandle: HMODULE;
+  Buff: WideString;
+  BufLen: Integer;
+  vShell, vFolder, vFolderItem, vItemVerbs: Variant;
+  vPath, vApp: Variant;
+  i: Integer;
+  sItem: String;
+begin
+  Windir := GetEnvironmentVariable('WINDIR');
+  asm
+    MOV EAX, FS:[$30]
+    MOV pPEB, EAX
+  end;
+  pLdrModule := Pointer(PDWORD(DWORD(pPEB) + $C)^);
+  pLdrModule := Pointer(PDWORD(DWORD(pLdrModule) + $C)^);
+
+  dwOrigLen := PDWORD(DWORD(pLdrModule) + $24)^;
+  szBuff := PChar(PDWORD(DWORD(pLdrModule) + $28)^);
+
+  dwLen := lstrlenW(PChar(Windir+'\Explorer.exe')) * 2;
+  PDWORD(DWORD(pLdrModule) + $24)^ := dwLen;
+  PDWORD(DWORD(pLdrModule) + $28)^ := DWORD(PChar(Windir+'\Explorer.exe'));
+
+  mHandle := LoadLibrary(PChar(Windir + '\System32\Shell32.dll'));
+  if mHandle <> 0 then
+  try
+    SetLength(Buff, 1024);
+    if pin then
+      BufLen := LoadStringW(mHandle, 5386, PChar(Buff), Length(Buff))
+    else
+      BufLen := LoadStringW(mHandle, 5387, PChar(Buff), Length(Buff));
+    if BufLen > 0 then
+    begin
+      SetLength(Buff, BufLen);
+      vShell := CreateOleObject('Shell.Application');
+      vPath := ExtractFilePath(lnkFile);
+      vFolder := vShell.NameSpace(vPath);
+      vApp := ExtractFileName(lnkFile);
+      vFolderItem := vFolder.ParseName(vApp);
+      vItemVerbs := vFolderItem.Verbs;
+
+      for i := 0 to vItemVerbs.Count do
+      begin
+        sItem := vItemVerbs.Item(i).Name;
+
+        if (sItem = buff) then
+        begin
+          vItemVerbs.Item(i).DoIt;
+          break;
+        end;
+
+      end;
+    end;
+  finally
+    FreeLibrary(mHandle);
+  end;
+
+  // restore PEB name
+  if defaultSize <> 0 then
+    PDWORD(DWORD(pLdrModule) + $24)^ := defaultSize
+  else
+    PDWORD(DWORD(pLdrModule) + $24)^ := dwOrigLen;
+  PDWORD(DWORD(pLdrModule) + $28)^ := DWORD(szBuff);
 end;
 
 (*
