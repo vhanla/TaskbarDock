@@ -156,6 +156,7 @@ type
 
   public
     { Public declarations }
+    AppPath, AppFolder, AppExe: String;
     Taskbars: TTaskbars;
     function ForceForeground(hwnd: HWND): Boolean;
     procedure CheckUpdate;
@@ -380,6 +381,10 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  AppPath := ParamStr(0);
+  AppFolder := ExtractFilePath(AppPath);
+  AppExe := ExtractFileName(AppPath);
+
   Self.ThemeManager := ThemeManager;
   AutoStartState;
   //CreateDB;
@@ -445,7 +450,7 @@ begin
 //  mnuFull.Checked := not mnuFull.Checked;
   //GetModuleFileName(GetWindowThreadProcessId(FindWindow('Shell_TrayWnd', nil)),ex,2048);
 
-  InjectDLL(GetProcessIdByName('explorer.exe'),PChar(ExtractFilePath(ParamStr(0))+'TaskbarDll.dll'));
+  InjectDLL(GetProcessIdByName('explorer.exe'),PChar(AppFolder+'TaskbarDll.dll'));
 end;
 
 function TForm1.GetProcessIdByName(s: String): DWORD;
@@ -574,7 +579,7 @@ var
   ini: TIniFile;
   val: Boolean;
 begin
-  ini := TIniFile.Create(ExtractFilePath(ParamStr(0))+'settings.ini');
+  ini := TIniFile.Create(AppFolder+'settings.ini');
   try
     mnuStart.Checked := ini.ReadBool('TaskbarDock','ShowStartButton', True);
     mnuTray.Checked := ini.ReadBool('TaskbarDock','ShowTrayArea', True);
@@ -598,7 +603,7 @@ procedure TForm1.SaveINI;
 var
   ini: TIniFile;
 begin
-  ini := TIniFile.Create(ExtractFilePath(ParamStr(0))+'settings.ini');
+  ini := TIniFile.Create(AppFolder+'settings.ini');
   try
     ini.WriteBool('TaskbarDock','ShowStartButton', mnuStart.Checked);
     ini.WriteBool('TaskbarDock','ShowTrayArea', mnuTray.Checked);
@@ -637,7 +642,8 @@ begin
       end;
       Sleep(1);
     end;
-
+    // this restores secondary taskbars too
+    SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
   end;
 
   SyncSettingsPage;
@@ -684,7 +690,7 @@ begin
     reg.RootKey := HKEY_CURRENT_USER;
     reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Run', False);
     if runwithwindows then
-      reg.WriteString('TaskbarDock', ParamStr(0))
+      reg.WriteString('TaskbarDock', AppPath)
     else
       if reg.ValueExists('TaskbarDock') then
         reg.DeleteValue('TaskbarDock');
@@ -1000,6 +1006,9 @@ var
   PNGBitmap: TGPBitmap;
   BitmapHandle: HBITMAP;
 begin
+  Taskbars.PinTaskbar(PChar(AppPath), false);
+
+  Exit;
 //  ListBox1.Items := Taskbars.ListMainTaskbarElements;
 
   SetWindowLong( Taskbars.MainTaskbar.MSTaskListWClass.Handle,GWL_EXSTYLE ,

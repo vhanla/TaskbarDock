@@ -190,7 +190,7 @@ type
     property Autohide: Boolean read GetAutoHideInfo write SetAutoHide;
     property SmallIcons: Boolean read GetSmallIcons write SetSmallIcons;
     procedure UpdateTaskbarInfo;
-    procedure Transparent;
+    procedure Transparent(Value: Boolean = True);
     procedure BeginUpdate;
     procedure EndUpdate;
 
@@ -508,7 +508,7 @@ begin
 end;
 
 procedure TTaskbars.PinTaskbar(lnkFile: PChar; pin: Boolean = True;
-  defaultSize: DWORD);
+  defaultSize: DWORD = 0);
 var
   pPEB:       Pointer;
   dwOrigLen, dwLen: DWORD;
@@ -727,7 +727,7 @@ begin
     ShowWindow(Items[Index]._start.Handle, SW_HIDE);
 end;
 
-procedure TTaskbars.Transparent;
+procedure TTaskbars.Transparent(Value: Boolean = True);
 var
   I: Integer;
   accent: AccentPolicy;
@@ -739,9 +739,15 @@ begin
   begin
     //if _notaskbar then Exit;
     //Items[I]._transstyle := ACCENT_ENABLE_TRANSPARENTGRADIENT;
-    accent.AccentState := ACCENT_ENABLE_TRANSPARENTGRADIENT; //Items[I]._transstyle;
+    if Value then
+    accent.AccentState := ACCENT_ENABLE_TRANSPARENTGRADIENT //Items[I]._transstyle;
+    else
+    accent.AccentState := ACCENT_ENABLE_GRADIENT;
     accent.GradientColor := $00000000;
-    accent.AccentFlags := 2; // 2: seems to hide the border
+    if Value then
+      accent.AccentFlags := not $20 and not $40 and not $80 and not $100
+    else // draw left, top, right and bottom borders
+      accent.AccentFlags := $20 or $40 or $80 or $100;
     data.Attribute := WCA_ACCENT_POLICY;
     data.SizeOfData := SizeOf(accent);
     data.Data := @accent;

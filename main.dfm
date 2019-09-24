@@ -255,10 +255,6 @@ object Form1: TForm1
         Caption = 'tbsAbout'
         ImageIndex = 1
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object headingAbout: TUText
           AlignWithMargins = True
           Left = 0
@@ -422,15 +418,11 @@ object Form1: TForm1
         Caption = 'tbsDocks'
         ImageIndex = 2
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
         object UText2: TUText
           AlignWithMargins = True
           Left = 0
           Top = 20
-          Width = 53
+          Width = 698
           Height = 28
           Margins.Left = 0
           Margins.Top = 20
@@ -445,6 +437,7 @@ object Form1: TForm1
           Font.Style = []
           ParentFont = False
           TextKind = tkHeading
+          ExplicitWidth = 53
         end
       end
       object tbsPinnedIcons: TTabSheet
@@ -463,15 +456,13 @@ object Form1: TForm1
           inherited UText3: TUText
             Width = 698
           end
-          inherited UButton5: TUButton
-            Anchors = [akTop]
-            OnClick = frameIcons1UButton5Click
-          end
-          inherited UButton2: TUButton
-            OnClick = frameIcons1UButton2Click
-          end
-          inherited UButton3: TUButton
-            Anchors = [akLeft, akTop, akBottom]
+          inherited Panel1: TPanel
+            inherited UButton1: TUButton
+              Anchors = [akLeft, akTop, akRight]
+            end
+            inherited UButton2: TUButton
+              Anchors = [akLeft, akTop, akRight]
+            end
           end
         end
       end
@@ -479,10 +470,6 @@ object Form1: TForm1
         Caption = 'tbsMore'
         ImageIndex = 4
         TabVisible = False
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
       end
       object tbsSkins: TTabSheet
         Caption = 'tbsSkins'
