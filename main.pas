@@ -414,6 +414,7 @@ begin
     end;
     Sleep(1);
   end;
+  SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
 
   FDownloadStream.Free;
   FClient.Free;
