@@ -197,6 +197,7 @@ type
     function IsStartMenuVisible: Boolean;
     procedure PinTaskbar(lnkFile: PChar; pin: Boolean = True; defaultSize: DWORD = 0);
     procedure RestoreAllStarts;
+    procedure RestoreOpacity(Handle: THandle);
     destructor Destroy; override;
   end;
 
@@ -684,6 +685,28 @@ begin
 
   for I := 0 to Count - 1 do
     ShowWindow(Items[I]._start.Handle, SW_SHOWNOACTIVATE);
+end;
+
+procedure TTaskbars.RestoreOpacity(Handle: THandle);
+var
+  counter: UINT64;
+begin
+// hacky ugly way to restore opacity, it might fail if start menu is gone
+    // bcoz, launching start menu restores opacity, but we need to hide it after
+    SendMessageTimeout(Handle,WM_SYSCOMMAND,SC_TASKLIST,0,SMTO_ABORTIFHUNG, 3000, 0);
+    counter := GetTickCount64;
+    while (GetTickCount64 - counter < 3000) do
+    begin
+      if IsStartMenuVisible then
+      begin
+        keybd_event(VK_LWIN, 0, 0, 0);
+        keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+        counter := counter - 3000;
+      end;
+      Sleep(1);
+    end;
+    // this restores secondary taskbars too
+    SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
 end;
 
 procedure TTaskbars.SetAutoHide(state: Boolean);
