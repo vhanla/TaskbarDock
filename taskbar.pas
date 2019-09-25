@@ -432,7 +432,9 @@ begin
   Result := nil;
   found := False;
   if FUpdating then Exit;
+
   I := 0;
+  if Count > 0 then
   while (I < Count) or not found do
   begin
     if Items[I].MainTaskbar then
