@@ -70,176 +70,14 @@ object Form1: TForm1
           TextKind = tkHeading
           ExplicitWidth = 71
         end
-        object chkStart: TUCheckBox
-          Left = 19
-          Top = 56
-          Width = 143
-          Height = 30
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Show Start Button'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          OnClick = chkStartClick
-        end
-        object chkTray: TUCheckBox
-          Left = 19
-          Top = 92
-          Width = 131
-          Height = 30
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Show Tray Area'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          OnClick = chkTrayClick
-        end
-        object chkTransparent: TUCheckBox
-          Left = 18
-          Top = 128
-          Width = 110
-          Height = 30
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Transparent'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          OnClick = chkTransparentClick
-        end
-        object chkCenter: TUCheckBox
-          Left = 18
-          Top = 164
-          Width = 78
-          Height = 30
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Center'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          OnClick = chkCenterClick
-        end
-        object chkCenterRelative: TUCheckBox
-          Left = 18
-          Top = 200
-          Width = 127
-          Height = 30
-          Hint = 'Center icons relative to its container only.'
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Center Relative'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          OnClick = chkCenterRelativeClick
-        end
-        object chkAutoStart: TUCheckBox
-          Left = 18
-          Top = 236
-          Width = 151
-          Height = 30
-          Hint = 'It will run after you logon.'
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Start with Windows'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-          OnClick = chkAutoStartClick
-        end
-        object chkSkinEnabled: TUCheckBox
-          Left = 184
-          Top = 56
-          Width = 142
-          Height = 30
-          Hint = 'Shows a background skin f'
-          ThemeManager = UThemeManager1
-          IconFont.Charset = DEFAULT_CHARSET
-          IconFont.Color = clWindowText
-          IconFont.Height = -20
-          IconFont.Name = 'Segoe MDL2 Assets'
-          IconFont.Style = []
-          Text = 'Experimental Skin'
-          State = cbsChecked
-          CustomActiveColor = 14120960
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Segoe UI'
-          Font.Style = []
-          ParentFont = False
-          ParentShowHint = False
-          ShowHint = True
-        end
         object ListBox1: TListBox
-          Left = 328
+          Left = 400
           Top = 56
-          Width = 353
+          Width = 281
           Height = 194
           Anchors = [akLeft, akTop, akRight]
           ItemHeight = 13
-          TabOrder = 7
+          TabOrder = 0
         end
         object Button1: TButton
           Left = 328
@@ -247,8 +85,95 @@ object Form1: TForm1
           Width = 353
           Height = 25
           Caption = 'List Taskbar Elements'
-          TabOrder = 8
+          TabOrder = 1
           OnClick = Button1Click
+        end
+        object chkStart: TEsSwitch
+          Left = 18
+          Top = 66
+          Width = 135
+          Height = 20
+          TextOn = 'Show Start Button'
+          TextOff = 'Show Start Button'
+          ShowCaption = True
+          TabOrder = 2
+          OnClick = chkStartClick
+        end
+        object chkTray: TEsSwitch
+          Left = 18
+          Top = 92
+          Width = 124
+          Height = 20
+          TextOn = 'Show Tray Area'
+          TextOff = 'Show Tray Area'
+          ShowCaption = True
+          TabOrder = 3
+          OnClick = chkTrayClick
+        end
+        object chkTransparent: TEsSwitch
+          Left = 18
+          Top = 118
+          Width = 147
+          Height = 20
+          TextOn = 'Taskbar Transparent'
+          TextOff = 'Taskbar Transparent'
+          ShowCaption = True
+          TabOrder = 4
+          OnClick = chkTransparentClick
+        end
+        object chkCenter: TEsSwitch
+          Left = 18
+          Top = 144
+          Width = 121
+          Height = 20
+          TextOn = 'Center Taskbar'
+          TextOff = 'Center Taskbar'
+          ShowCaption = True
+          TabOrder = 5
+          OnClick = chkCenterClick
+        end
+        object chkCenterRelative: TEsSwitch
+          Left = 18
+          Top = 170
+          Width = 212
+          Height = 20
+          TextOn = 'Center Taskbar relative to its area'
+          TextOff = 'Center Taskbar relative to its area'
+          ShowCaption = True
+          TabOrder = 6
+          OnClick = chkCenterRelativeClick
+        end
+        object chkAutoStart: TEsSwitch
+          Left = 18
+          Top = 261
+          Width = 140
+          Height = 20
+          TextOn = 'Start with Windows'
+          TextOff = 'Start with Windows'
+          ShowCaption = True
+          TabOrder = 7
+          OnClick = chkAutoStartClick
+        end
+        object chkSkinEnabled: TEsSwitch
+          Left = 18
+          Top = 196
+          Width = 131
+          Height = 20
+          TextOn = 'Experimental Skin'
+          TextOff = 'Experimental Skin'
+          ShowCaption = True
+          TabOrder = 8
+        end
+        object chkSmall: TEsSwitch
+          Left = 18
+          Top = 222
+          Width = 100
+          Height = 20
+          TextOn = 'Small Icons'
+          TextOff = 'Small Icons'
+          ShowCaption = True
+          TabOrder = 9
+          OnClick = chkSmallClick
         end
       end
       object tbsAbout: TTabSheet
@@ -456,6 +381,30 @@ object Form1: TForm1
           inherited UText3: TUText
             Width = 698
           end
+          inherited pnlIconOriginal: TPanel
+            inherited imgOriginal: TEsImageControl
+              ExplicitLeft = 1
+              ExplicitTop = 1
+              ExplicitWidth = 94
+              ExplicitHeight = 94
+            end
+          end
+          inherited pnlIconNew: TPanel
+            inherited imgNew: TEsImageControl
+              ExplicitLeft = 1
+              ExplicitTop = 1
+              ExplicitWidth = 94
+              ExplicitHeight = 94
+            end
+          end
+          inherited pnlIconLight: TPanel
+            inherited imgLight: TEsImageControl
+              ExplicitLeft = 1
+              ExplicitTop = 1
+              ExplicitWidth = 94
+              ExplicitHeight = 94
+            end
+          end
           inherited Panel1: TPanel
             inherited UButton1: TUButton
               Anchors = [akLeft, akTop, akRight]
@@ -479,12 +428,19 @@ object Form1: TForm1
           Left = 0
           Top = 0
           Width = 698
-          Height = 240
+          Height = 355
           Align = alTop
           TabOrder = 0
           ExplicitWidth = 698
           inherited UText3: TUText
             Width = 698
+          end
+          inherited Panel1: TPanel
+            inherited EsImageControl1: TEsImageControl
+              ExplicitLeft = 1
+              ExplicitTop = 1
+              ExplicitWidth = 516
+            end
           end
         end
       end
@@ -760,6 +716,8 @@ object Form1: TForm1
       TabOrder = 3
       TabStop = True
       OnClick = USymbolButton4Click
+      ExplicitLeft = 1
+      ExplicitTop = 46
     end
     object USymbolButton5: TUSymbolButton
       Left = 0
@@ -852,13 +810,13 @@ object Form1: TForm1
     PopupMenu = PopupMenu1
     Visible = True
     OnDblClick = TrayIcon1DblClick
-    Left = 208
-    Top = 344
+    Left = 304
+    Top = 352
   end
   object PopupMenu1: TPopupMenu
     OnPopup = PopupMenu1Popup
-    Left = 280
-    Top = 240
+    Left = 304
+    Top = 272
     object mnuStart: TMenuItem
       Caption = 'Show &Start button'
       Checked = True
@@ -886,9 +844,9 @@ object Form1: TForm1
       Caption = '&Center'
       OnClick = mnuCenterClick
     end
-    object SmallIcons1: TMenuItem
+    object mnuSmall: TMenuItem
       Caption = 'Small Icons'
-      OnClick = SmallIcons1Click
+      OnClick = mnuSmallClick
     end
     object N2: TMenuItem
       Caption = '-'
@@ -920,34 +878,34 @@ object Form1: TForm1
   object tmrUpdateTBinfo: TTimer
     Enabled = False
     OnTimer = tmrUpdateTBinfoTimer
-    Left = 296
-    Top = 344
+    Left = 384
+    Top = 352
   end
   object tmrOptions: TTimer
     Interval = 250
     OnTimer = tmrOptionsTimer
-    Left = 96
-    Top = 344
+    Left = 152
+    Top = 352
   end
   object tmrThreadWaiter: TTimer
     Enabled = False
     OnTimer = tmrThreadWaiterTimer
-    Left = 136
-    Top = 344
+    Left = 232
+    Top = 352
   end
   object tmrCenter: TTimer
     Enabled = False
     Interval = 100
     OnTimer = tmrCenterTimer
-    Left = 40
-    Top = 344
+    Left = 80
+    Top = 352
   end
   object MadExceptionHandler1: TMadExceptionHandler
-    Left = 368
-    Top = 344
+    Left = 496
+    Top = 352
   end
   object UThemeManager1: TUThemeManager
-    Left = 368
-    Top = 208
+    Left = 680
+    Top = 352
   end
 end

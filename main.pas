@@ -11,7 +11,8 @@ uses
   UCL.IntAnimation, UCL.IntAnimation.Helpers ,UCL.TUScrollBox, Vcl.ComCtrls,
   UCL.TUHyperLink, Vcl.StdCtrls, UCL.TUText, UCL.TUCheckBox,
   System.Net.HttpClient, System.Types,
-  frmIcons, UCL.TUProgressBar, frmSkins, GDIPAPI, GDIPOBJ;
+  frmIcons, UCL.TUProgressBar, frmSkins, GDIPAPI, GDIPOBJ, ES.BaseControls,
+  ES.Switch, ES.Labels;
 
 type
 
@@ -69,23 +70,24 @@ type
     tbsDocks: TTabSheet;
     UText2: TUText;
     tbsPinnedIcons: TTabSheet;
-    chkStart: TUCheckBox;
-    chkTray: TUCheckBox;
-    chkTransparent: TUCheckBox;
-    chkCenter: TUCheckBox;
-    chkCenterRelative: TUCheckBox;
-    chkAutoStart: TUCheckBox;
     frameIcons1: TframeIcons;
     pbDownload: TUProgressBar;
     USymbolButton6: TUSymbolButton;
     tbsMore: TTabSheet;
-    chkSkinEnabled: TUCheckBox;
     USymbolButton7: TUSymbolButton;
     tbsSkins: TTabSheet;
     frmSkin1: TfrmSkin;
     ListBox1: TListBox;
     Button1: TButton;
-    SmallIcons1: TMenuItem;
+    mnuSmall: TMenuItem;
+    chkStart: TEsSwitch;
+    chkTray: TEsSwitch;
+    chkTransparent: TEsSwitch;
+    chkCenter: TEsSwitch;
+    chkCenterRelative: TEsSwitch;
+    chkAutoStart: TEsSwitch;
+    chkSkinEnabled: TEsSwitch;
+    chkSmall: TEsSwitch;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -113,20 +115,21 @@ type
     procedure UButton3Click(Sender: TObject);
     procedure USymbolButton5Click(Sender: TObject);
     procedure USymbolButton4Click(Sender: TObject);
-    procedure chkAutoStartClick(Sender: TObject);
-    procedure chkCenterRelativeClick(Sender: TObject);
-    procedure chkCenterClick(Sender: TObject);
-    procedure chkTransparentClick(Sender: TObject);
-    procedure chkTrayClick(Sender: TObject);
-    procedure chkStartClick(Sender: TObject);
     procedure btnCheckUpdateClick(Sender: TObject);
     procedure frameIcons1UButton5Click(Sender: TObject);
     procedure frameIcons1UButton2Click(Sender: TObject);
     procedure USymbolButton7Click(Sender: TObject);
     procedure frameIcons1UButton1Click(Sender: TObject);
     procedure Button1Click(Sender: TObject);
-    procedure SmallIcons1Click(Sender: TObject);
+    procedure mnuSmallClick(Sender: TObject);
     procedure PopupMenu1Popup(Sender: TObject);
+    procedure chkStartClick(Sender: TObject);
+    procedure chkTrayClick(Sender: TObject);
+    procedure chkTransparentClick(Sender: TObject);
+    procedure chkCenterClick(Sender: TObject);
+    procedure chkCenterRelativeClick(Sender: TObject);
+    procedure chkAutoStartClick(Sender: TObject);
+    procedure chkSmallClick(Sender: TObject);
   private
     { Private declarations }
     ms: TPoint;
@@ -228,7 +231,7 @@ begin
   tmrCenter.Enabled := mnuCenter.Checked;
 
   Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
-  SyncSettingsPage;
+  chkCenter.Checked := mnuCenter.Checked;
 end;
 
 
@@ -400,21 +403,9 @@ begin
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
-var counter: UINT64;
 begin
 //  KillHook;
-  counter := GetTickCount64;
-  while (GetTickCount64 - counter < 3000) do
-  begin
-    if Taskbars.IsStartMenuVisible then
-    begin
-      keybd_event(VK_LWIN, $9d, 0, 0);
-      keybd_event(VK_LWIN, $9d, KEYEVENTF_KEYUP, 0);
-      counter := counter - 3000;
-    end;
-    Sleep(1);
-  end;
-  SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
+  Taskbars.RestoreOpacity(Handle);
 
   FDownloadStream.Free;
   FClient.Free;
@@ -578,7 +569,6 @@ end;
 procedure TForm1.LoadINI;
 var
   ini: TIniFile;
-  val: Boolean;
 begin
   ini := TIniFile.Create(AppFolder+'settings.ini');
   try
@@ -590,11 +580,8 @@ begin
     tmrCenter.Enabled := mnuCenter.Checked;
     mnuTransparent.Checked := ini.ReadBool('TaskbarDock','Transparent', False);
 
-    val := ini.ReadBool('Skin', 'Enabled', False);
-    if val then
-      chkSkinEnabled.State := cbsChecked
-    else
-      chkSkinEnabled.State := cbsUnchecked;
+    chkSkinEnabled.Checked := ini.ReadBool('Skin', 'Enabled', False);
+
   finally
     ini.Free;
   end;
@@ -613,52 +600,30 @@ begin
     ini.WriteBool('TaskbarDock','CenterRelative', mnuCenter.Checked);
     ini.WriteBool('TaskbarDock','Transparent', mnuTransparent.Checked);
 
-    if chkSkinEnabled.State = cbsChecked then
-      ini.WriteBool('Skin', 'Enabled', True)
-    else
-      ini.WriteBool('Skin', 'Enabled', False);
+    ini.WriteBool('Skin', 'Enabled', chkSkinEnabled.Checked);
   finally
     ini.Free;
   end;
 end;
 
 procedure TForm1.mnuTransparentClick(Sender: TObject);
-var
-  counter: UINT64; //49 days
 begin
+
   mnuTransparent.Checked := not mnuTransparent.Checked;
   if not mnuTransparent.Checked then
-  begin
-    // hacky ugly way to restore opacity, it might fail if start menu is gone
-    // bcoz, launching start menu restores opacity, but we need to hide it after
-    SendMessageTimeout(handle,WM_SYSCOMMAND,SC_TASKLIST,0,SMTO_ABORTIFHUNG, 3000, 0);
-    counter := GetTickCount64;
-    while (GetTickCount64 - counter < 3000) do
-    begin
-      if Taskbars.IsStartMenuVisible then
-      begin
-        keybd_event(VK_LWIN, 0, 0, 0);
-        keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
-        counter := counter - 3000;
-      end;
-      Sleep(1);
-    end;
-    // this restores secondary taskbars too
-    SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
-  end;
+    Taskbars.RestoreOpacity(Handle);
 
-  SyncSettingsPage;
 end;
 
 procedure TForm1.mnuTrayClick(Sender: TObject);
 begin
   mnuTray.Checked := not mnuTray.Checked;
-  SyncSettingsPage;
+  chkTray.Checked := mnuTray.Checked;
 end;
 
 procedure TForm1.PopupMenu1Popup(Sender: TObject);
 begin
-  SmallIcons1.Checked := Taskbars.SmallIcons;
+  mnuSmall.Checked := Taskbars.SmallIcons;
 end;
 
 procedure TForm1.ReceiveDataEvent(const Sender: TObject; AContentLength,
@@ -679,7 +644,7 @@ end;
 procedure TForm1.mnuCenterRelativeClick(Sender: TObject);
 begin
   mnuCenterRelative.Checked := not mnuCenterRelative.Checked;
-  SyncSettingsPage;
+  chkCenterRelative.Checked := mnuCenterRelative.Checked;
 end;
 
 procedure TForm1.SetAutoStart(runwithwindows: Boolean);
@@ -701,34 +666,22 @@ begin
   end;
 end;
 
-procedure TForm1.SmallIcons1Click(Sender: TObject);
+procedure TForm1.mnuSmallClick(Sender: TObject);
 begin
-  Taskbars.SmallIcons := not SmallIcons1.Checked;
-  SmallIcons1.Checked := Taskbars.SmallIcons;
+  Taskbars.SmallIcons := not mnuSmall.Checked;
+  mnuSmall.Checked := Taskbars.SmallIcons;
   Taskbars.Refresh;
 end;
 
+// syncs check statuses from popupmenu to settings page
 procedure TForm1.SyncSettingsPage;
 begin
-  chkStart.State := cbsUnchecked;
-  chkTray.State := cbsUnchecked;
-  chkTransparent.State := cbsUnchecked;
-  chkCenter.State := cbsUnchecked;
-  chkAutoStart.State := cbsUnchecked;
-  chkCenterRelative.State := cbsUnchecked;
-
-  if mnuStart.Checked then
-    chkStart.State := cbsChecked;
-  if mnuTray.Checked then
-    chkTray.State := cbsChecked;
-  if mnuTransparent.Checked then
-    chkTransparent.State := cbsChecked;
-  if mnuCenter.Checked then
-    chkCenter.State := cbsChecked;
-  if mnuCenterRelative.Checked then
-    chkCenterRelative.State := cbsChecked;
-  if mnuStartwithWindows.Checked then
-    chkAutoStart.State := cbsChecked;
+  chkStart.Checked := mnuStart.Checked;
+  chkTray.Checked := mnuTray.Checked;
+  chkTransparent.Checked := mnuTransparent.Checked;
+  chkCenter.Checked:= mnuCenter.Checked;
+  chkCenterRelative.Checked := mnuCenterRelative.Checked;
+  chkAutoStart.Checked := mnuStartwithWindows.Checked;
 end;
 
 function TForm1.SystemUsesLightTheme: Boolean;
@@ -754,14 +707,14 @@ end;
 procedure TForm1.mnuStartClick(Sender: TObject);
 begin
   mnuStart.Checked := not mnuStart.Checked;
-  SyncSettingsPage;
+  chkStart.Checked := mnuStart.Checked;
 end;
 
 procedure TForm1.mnuStartwithWindowsClick(Sender: TObject);
 begin
   mnuStartwithWindows.Checked := not mnuStartwithWindows.Checked;
   SetAutoStart(mnuStartwithWindows.Checked);
-  SyncSettingsPage;
+  chkAutoStart.Checked := mnuStartwithWindows.Checked;
 end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
@@ -779,7 +732,7 @@ begin
   begin
     Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
 
-    if chkSkinEnabled.State = cbsChecked then
+    if chkSkinEnabled.Checked then
     begin
       if not IsWindowVisible(Form2.Handle) then
         Form2.Show;
@@ -1090,41 +1043,43 @@ end;
 
 procedure TForm1.chkAutoStartClick(Sender: TObject);
 begin
-  mnuStartwithWindowsClick(Sender);
-  SyncSettingsPage;
+  mnuStartwithWindows.Checked := chkAutoStart.Checked;
+  SetAutoStart(mnuStartwithWindows.Checked);
 end;
 
 procedure TForm1.chkCenterClick(Sender: TObject);
 begin
-  mnuCenterClick(Sender);
-  if mnuCenter.Checked then
-    chkCenter.State := cbsChecked
-  else
-    chkCenter.State := cbsUnchecked;
+  mnuCenter.Checked := chkCenter.Checked;
+  Taskbars.CenterAppsButtons(mnuCenter.Checked, mnuCenterRelative.Checked);
 end;
 
 procedure TForm1.chkCenterRelativeClick(Sender: TObject);
 begin
-  mnuCenterRelativeClick(Sender);
-  SyncSettingsPage;
+  mnuCenterRelative.Checked := chkCenterRelative.Checked;
+end;
+
+procedure TForm1.chkSmallClick(Sender: TObject);
+begin
+  mnuSmall.Checked := chkSmall.Checked;
+  mnuSmall.Checked := Taskbars.SmallIcons;
+  Taskbars.Refresh;
 end;
 
 procedure TForm1.chkStartClick(Sender: TObject);
 begin
-  mnuStartClick(Sender);
-  SyncSettingsPage;
+  mnuStart.Checked := chkStart.Checked;
 end;
 
 procedure TForm1.chkTransparentClick(Sender: TObject);
 begin
-  mnuTransparentClick(Sender);
-  SyncSettingsPage;
+  mnuTransparent.Checked := chkTransparent.Checked;
+  if not mnuTransparent.Checked then
+    Taskbars.RestoreOpacity(Handle);
 end;
 
 procedure TForm1.chkTrayClick(Sender: TObject);
 begin
-  mnuTrayClick(Sender);
-  SyncSettingsPage;
+  mnuTray.Checked := chkTray.Checked;
 end;
 
 procedure TForm1.USymbolButton1Click(Sender: TObject);
