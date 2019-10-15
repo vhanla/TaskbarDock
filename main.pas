@@ -88,6 +88,7 @@ type
     chkAutoStart: TEsSwitch;
     chkSkinEnabled: TEsSwitch;
     chkSmall: TEsSwitch;
+    chkAnimation: TEsSwitch;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -130,6 +131,8 @@ type
     procedure chkCenterRelativeClick(Sender: TObject);
     procedure chkAutoStartClick(Sender: TObject);
     procedure chkSmallClick(Sender: TObject);
+    procedure chkAnimationClick(Sender: TObject);
+    procedure tbsSettingsShow(Sender: TObject);
   private
     { Private declarations }
     ms: TPoint;
@@ -671,6 +674,7 @@ begin
   Taskbars.SmallIcons := not mnuSmall.Checked;
   mnuSmall.Checked := Taskbars.SmallIcons;
   Taskbars.Refresh;
+  chkSmall.Checked := mnuSmall.Checked;
 end;
 
 // syncs check statuses from popupmenu to settings page
@@ -717,11 +721,19 @@ begin
   chkAutoStart.Checked := mnuStartwithWindows.Checked;
 end;
 
+procedure TForm1.tbsSettingsShow(Sender: TObject);
+begin
+  chkAnimation.Checked := Taskbars.SmallIcons;
+end;
+
 procedure TForm1.tmrCenterTimer(Sender: TObject);
 var
   fgwnd: THandle;
   dc: HDC;
+  MainTaskbar: PTaskbar;
 begin
+  MainTaskbar := nil;
+
   if Taskbars.Count = 0 then Exit;
 
   if Taskbars.IsStartMenuVisible then
@@ -737,13 +749,25 @@ begin
       if not IsWindowVisible(Form2.Handle) then
         Form2.Show;
 
-      //if Taskbar.MSTaskRect.Left <> Taskbar.MSTaskListRect.Left then
-      //begin
-      //  skinform.Form2.Width := Taskbar.AppsRight - Taskbar.AppsLeft; //Taskbar.MSTaskListRect.Width;
-      //  skinform.Form2.Height := Taskbar.MSTaskListRect.Height;
-      //  skinform.Form2.Top := Taskbar.Rect.Top;
-      //  skinform.Form2.Left := Taskbar.MSTaskListRect.Left;
-      //end;
+      MainTaskbar := Taskbars.MainTaskbar;
+
+      if MainTaskbar <> nil then
+      begin
+        if MainTaskbar.MSTaskRect.Left <> Taskbars.MainTaskbar.MSTaskListWClass.Rect.Left then
+        begin
+          skinform.Form2.Width := MainTaskbar.MSTaskListWClass.Rect.Width; //Taskbar.MSTaskListRect.Width;
+          skinform.Form2.Height := MainTaskbar.MSTaskListWClass.Rect.Height;
+          skinform.Form2.Top := MainTaskbar.MSTaskListWClass.Rect.Top;
+          skinform.Form2.Left := MainTaskbar.MSTaskListWClass.Rect.Left;
+        end;
+      end;
+
+      // Windows 10 mode  = 0
+      if frmSkin1.ComboBox1.ItemIndex = 0 then
+      begin
+
+      end;
+
       fgwnd := GetForegroundWindow;
       if (fgwnd <> prevForegroundWindow) then
       begin
@@ -993,7 +1017,7 @@ begin
   try
 
   PNGBitmap := TGPBitmap.Create('L:\Proyectos\TaskbarDock\Win32\Debug\skins\Sierra\bigdemo.png');
-  PNGBitmap.GetHBITMAP(MakeColor(0,0,0,0), BitmapHandle);
+  PNGBitmap.GetHBITMAP($00000000, BitmapHandle);
   Bitmap.Handle := BitmapHandle;
 
   PremultiplyBitmap(Bitmap);
@@ -1041,6 +1065,11 @@ begin
   end;
 end;
 
+procedure TForm1.chkAnimationClick(Sender: TObject);
+begin
+  Taskbars.TaskbarAnimation := chkAnimation.Checked;
+end;
+
 procedure TForm1.chkAutoStartClick(Sender: TObject);
 begin
   mnuStartwithWindows.Checked := chkAutoStart.Checked;
@@ -1061,6 +1090,7 @@ end;
 procedure TForm1.chkSmallClick(Sender: TObject);
 begin
   mnuSmall.Checked := chkSmall.Checked;
+  Taskbars.SmallIcons := mnuSmall.Checked;
   mnuSmall.Checked := Taskbars.SmallIcons;
   Taskbars.Refresh;
 end;
@@ -1098,6 +1128,7 @@ end;
 procedure TForm1.USymbolButton2Click(Sender: TObject);
 begin
   PageControl1.ActivePageIndex := 0;
+  chkSmall.Checked := Taskbars.SmallIcons;
 end;
 
 procedure TForm1.USymbolButton3Click(Sender: TObject);

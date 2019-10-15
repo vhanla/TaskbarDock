@@ -46,6 +46,7 @@ object Form1: TForm1
       object tbsSettings: TTabSheet
         Caption = 'tbsSettings'
         TabVisible = False
+        OnShow = tbsSettingsShow
         DesignSize = (
           698
           361)
@@ -145,7 +146,7 @@ object Form1: TForm1
         end
         object chkAutoStart: TEsSwitch
           Left = 18
-          Top = 261
+          Top = 274
           Width = 140
           Height = 20
           TextOn = 'Start with Windows'
@@ -174,6 +175,17 @@ object Form1: TForm1
           ShowCaption = True
           TabOrder = 9
           OnClick = chkSmallClick
+        end
+        object chkAnimation: TEsSwitch
+          Left = 18
+          Top = 248
+          Width = 186
+          Height = 20
+          TextOn = 'Taskbar Thumbnail Animation'
+          TextOff = 'Taskbar Thumbnail Animation'
+          ShowCaption = True
+          TabOrder = 10
+          OnClick = chkAnimationClick
         end
       end
       object tbsAbout: TTabSheet
@@ -407,10 +419,18 @@ object Form1: TForm1
           end
           inherited Panel1: TPanel
             inherited UButton1: TUButton
+              ThemeManager = nil
               Anchors = [akLeft, akTop, akRight]
             end
             inherited UButton2: TUButton
+              ThemeManager = nil
               Anchors = [akLeft, akTop, akRight]
+            end
+            inherited UButton3: TUButton
+              ThemeManager = nil
+            end
+            inherited UButton5: TUButton
+              ThemeManager = nil
             end
           end
         end
@@ -434,13 +454,6 @@ object Form1: TForm1
           ExplicitWidth = 698
           inherited UText3: TUText
             Width = 698
-          end
-          inherited Panel1: TPanel
-            inherited EsImageControl1: TEsImageControl
-              ExplicitLeft = 1
-              ExplicitTop = 1
-              ExplicitWidth = 516
-            end
           end
         end
       end
@@ -716,8 +729,6 @@ object Form1: TForm1
       TabOrder = 3
       TabStop = True
       OnClick = USymbolButton4Click
-      ExplicitLeft = 1
-      ExplicitTop = 46
     end
     object USymbolButton5: TUSymbolButton
       Left = 0
