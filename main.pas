@@ -723,7 +723,7 @@ end;
 
 procedure TForm1.tbsSettingsShow(Sender: TObject);
 begin
-  chkAnimation.Checked := Taskbars.SmallIcons;
+  chkAnimation.Checked := Taskbars.TaskbarAnimation;
 end;
 
 procedure TForm1.tmrCenterTimer(Sender: TObject);
