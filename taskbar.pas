@@ -177,7 +177,9 @@ type
     function GetAutoHideInfo: Boolean;
     procedure SetAutoHide(state: Boolean);
     function GetSmallIcons: Boolean;
+    function GetAnimationState: Boolean;
     procedure SetSmallIcons(Value: Boolean);
+    procedure SetAnimationState(Value: Boolean);
   public
     function Add(Value: PTaskbar): Integer;
     procedure Refresh;
@@ -189,6 +191,7 @@ type
     property MainTaskbar: PTaskbar read GetMainTaskbar;
     property Autohide: Boolean read GetAutoHideInfo write SetAutoHide;
     property SmallIcons: Boolean read GetSmallIcons write SetSmallIcons;
+    property TaskbarAnimation: Boolean read GetAnimationState write SetAnimationState;
     procedure UpdateTaskbarInfo;
     procedure Transparent(Value: Boolean = True);
     procedure BeginUpdate;
@@ -413,6 +416,22 @@ end;
 function TTaskbars.Get(Index: Integer): PTaskbar;
 begin
   Result := PTaskbar(inherited Get(Index));
+end;
+
+function TTaskbars.GetAnimationState: Boolean;
+var
+  reg: TRegistry;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.OpenKeyReadOnly('SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced');
+    if reg.ReadInteger('TaskbarAnimations') = 1 then Result := True
+    else
+      Result := False;
+  finally
+    reg.Free;
+  end;
 end;
 
 function TTaskbars.GetAutoHideInfo: Boolean;
@@ -709,6 +728,24 @@ begin
     end;
     // this restores secondary taskbars too
     SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
+end;
+
+procedure TTaskbars.SetAnimationState(Value: Boolean);
+var
+  reg: TRegistry;
+begin
+  reg := TRegistry.Create;
+  try
+    reg.RootKey := HKEY_CURRENT_USER;
+    reg.OpenKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced', False);
+    if Value then
+    reg.WriteInteger('TaskbarAnimations', 1)
+    else
+      reg.WriteInteger('TaskbarAnimations', 0);
+    SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, 0, LongInt(PChar('TraySettings')));
+  finally
+    reg.Free;
+  end;
 end;
 
 procedure TTaskbars.SetAutoHide(state: Boolean);
