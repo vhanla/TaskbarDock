@@ -89,6 +89,7 @@ type
     chkSkinEnabled: TEsSwitch;
     chkSmall: TEsSwitch;
     chkAnimation: TEsSwitch;
+    mnuTaskbarSettings: TMenuItem;
     procedure Exit1Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -133,6 +134,7 @@ type
     procedure chkSmallClick(Sender: TObject);
     procedure chkAnimationClick(Sender: TObject);
     procedure tbsSettingsShow(Sender: TObject);
+    procedure mnuTaskbarSettingsClick(Sender: TObject);
   private
     { Private declarations }
     ms: TPoint;
@@ -200,7 +202,8 @@ implementation
 
 uses skinform, functions, settings;
 
-
+var
+  skinFrm: TForm2;
 
 
 procedure TForm1.mnuAboutClick(Sender: TObject);
@@ -209,6 +212,11 @@ begin
   #13'Author: vhanla'+
   #13'MIT License'+
   #13#13'https://github.com/vhanla/taskbardock',mtInformation, [mbOK], 0);
+end;
+
+procedure TForm1.mnuTaskbarSettingsClick(Sender: TObject);
+begin
+  WinExec(PAnsiChar('rundll32.exe shell32.dll, Options_RunDLL 1'), SW_SHOWNORMAL);
 end;
 
 procedure TForm1.AutoStartState;
@@ -746,8 +754,11 @@ begin
 
     if chkSkinEnabled.Checked then
     begin
-      if not IsWindowVisible(Form2.Handle) then
-        Form2.Show;
+      if skinFrm = nil then
+        skinFrm := TForm2.CreateNew(Self,Taskbars.MainTaskbar.Handle);
+
+      if not IsWindowVisible(skinFrm.Handle) then
+        skinFrm.Show;
 
       MainTaskbar := Taskbars.MainTaskbar;
 
@@ -755,10 +766,10 @@ begin
       begin
         if MainTaskbar.MSTaskRect.Left <> Taskbars.MainTaskbar.MSTaskListWClass.Rect.Left then
         begin
-          skinform.Form2.Width := MainTaskbar.MSTaskListWClass.Rect.Width; //Taskbar.MSTaskListRect.Width;
-          skinform.Form2.Height := MainTaskbar.MSTaskListWClass.Rect.Height;
-          skinform.Form2.Top := MainTaskbar.MSTaskListWClass.Rect.Top;
-          skinform.Form2.Left := MainTaskbar.MSTaskListWClass.Rect.Left;
+          skinFrm.Width := MainTaskbar.MSTaskListWClass.Rect.Width; //Taskbar.MSTaskListRect.Width;
+          skinFrm.Height := MainTaskbar.MSTaskListWClass.Rect.Height;
+          skinFrm.Top := MainTaskbar.MSTaskListWClass.Rect.Top;
+          skinFrm.Left := MainTaskbar.MSTaskListWClass.Rect.Left;
         end;
       end;
 
@@ -837,8 +848,8 @@ begin
     end
     else
     begin
-      if IsWindowVisible(Form2.Handle) then
-        Form2.Hide;
+      if IsWindowVisible(skinFrm.Handle) then
+        skinFrm.Hide;
     end;
   end;
 end;
