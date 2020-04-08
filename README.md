@@ -1,3 +1,5 @@
+<img src="http://img.shields.io/liberapay/patrons/vhanla.svg?logo=liberapay">
+
 # TaskbarDock
 
 TaskbarDock offers a few extra features to customize your Windows 10 taskbar.
