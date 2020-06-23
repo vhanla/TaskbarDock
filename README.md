@@ -1,5 +1,6 @@
-![Liberapay patrons](https://img.shields.io/liberapay/patrons/vhanla) ![GitHub All Releases](https://img.shields.io/github/downloads/vhanla/TaskbarDock/total)
-
+[![Liberapay patrons](https://img.shields.io/liberapay/patrons/vhanla?label=Become%20a%20patron&style=for-the-badge)](https://liberapay.com/vhanla)
+[![GitHub All Releases](https://img.shields.io/github/downloads/vhanla/TaskbarDock/total?style=for-the-badge)](https://github.com/vhanla/TaskbarDock/releases)
+[![paypal](https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=for-the-badge)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=J2M9EPGRRGNH6)
 # TaskbarDock
 
 TaskbarDock offers a few extra features to customize your Windows 10 taskbar.
