@@ -1,4 +1,4 @@
-<img src="http://img.shields.io/liberapay/patrons/vhanla.svg?logo=liberapay">
+![Liberapay patrons](https://img.shields.io/liberapay/patrons/vhanla) ![GitHub All Releases](https://img.shields.io/github/downloads/vhanla/TaskbarDock/total)
 
 # TaskbarDock
 
